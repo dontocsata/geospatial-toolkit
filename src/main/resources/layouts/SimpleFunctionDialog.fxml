@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.net.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.collections.FXCollections ?>
+
+<DialogPane xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1">
+	<header>
+		<AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="50.0"
+			prefWidth="320.0" />
+	</header>
+	<content>
+		<AnchorPane>
+			<children>
+				<TextArea id="firstTextArea" fx:id="firstTextArea" layoutX="11.0"
+					onKeyReleased="#executeFunction" prefHeight="211.0" prefWidth="470.0" />
+				<ComboBox layoutX="11.0" layoutY="220.0" prefWidth="150.0"
+					fx:id="comboBox" onAction="#executeFunctionCombo">
+					<items>
+						<FXCollections fx:factory="observableArrayList">
+							<String fx:value="contains" />
+							<String fx:value="coveredBy" />
+							<String fx:value="covers" />
+							<String fx:value="crosses" />
+							<String fx:value="disjoint" />
+							<String fx:value="intersects" />
+							<String fx:value="overlaps" />
+							<String fx:value="touches" />
+							<String fx:value="within" />
+						</FXCollections>
+					</items>
+					<value>
+						<String fx:value="contains" />
+					</value>
+				</ComboBox>
+				<TextArea id="secondTextArea" fx:id="secondTextArea"
+					layoutX="11.0" layoutY="254.0" onKeyReleased="#executeFunction"
+					prefHeight="211.0" prefWidth="470.0" />
+				<Label fx:id="firstLabel" layoutX="361.0" layoutY="225.0"
+					prefHeight="16.0" prefWidth="120.0" />
+				<Label id="secondLabel" fx:id="secondLabel" layoutX="361.0"
+					layoutY="475.0" prefHeight="16.0" prefWidth="120.0" />
+			</children>
+		</AnchorPane>
+	</content>
+</DialogPane>
