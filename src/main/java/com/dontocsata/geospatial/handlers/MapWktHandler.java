@@ -1,6 +1,9 @@
 package com.dontocsata.geospatial.handlers;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -8,19 +11,21 @@ import org.springframework.stereotype.Component;
 import com.dontocsata.geospatial.CommandHandler;
 import com.dontocsata.geospatial.GeoUtils;
 import com.dontocsata.geospatial.GeometryParser;
+import com.dontocsata.geospatial.MapLayer;
 import com.dontocsata.geospatial.MenuItemDescriptor;
+import com.dontocsata.geospatial.StreamUtils;
 import com.dontocsata.geospatial.config.FxmlTemplateResolver;
 import com.lynden.gmapsfx.javascript.object.GoogleMap;
 import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.Point;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.util.Pair;
+import javafx.scene.paint.Color;
 
 @Component
 public class MapWktHandler implements CommandHandler {
@@ -37,30 +42,34 @@ public class MapWktHandler implements CommandHandler {
 	@FXML
 	private TextField sridInput;
 
+	@FXML
+	private ColorPicker colorPicker;
+
 	@Override
 	public void invoke(GoogleMap map) throws Exception {
-		Dialog<Pair<String, Integer>> dialog = new Dialog<>();
+		Dialog<MapWktResult> dialog = new Dialog<>();
 		dialog.setTitle("Map WKT");
 		DialogPane pane = templates.loadTemplate("WktDialog.fxml", this);
 		pane.getButtonTypes().addAll(ButtonType.OK, ButtonType.CLOSE);
 		dialog.setDialogPane(pane);
 		dialog.setResultConverter(dialogButton -> {
 			if (dialogButton == ButtonType.OK) {
-				return new Pair<String, Integer>(textArea.getText(), Integer.parseInt(sridInput.getText()));
+				String wkts = textArea.getText();
+				int srid = Integer.parseInt(sridInput.getText());
+				Color color = colorPicker.getValue();
+				return new MapWktResult(wkts, color, srid);
 			}
 			return null;
 		});
-		Optional<Pair<String, Integer>> result = dialog.showAndWait();
+		Optional<MapWktResult> result = dialog.showAndWait();
 		if(result.isPresent()) {
-			String[] wkt = result.get().getKey().split("\n");
-			for(String s:wkt) {
-				Geometry geom = geometryParser.parse(s, result.get().getValue());
-				if(geom instanceof Point) {
-					map.addMarker(GeoUtils.convert((Point) geom));
-				}else {
-					map.addMapShape(GeoUtils.convert(geom));
-				}
-			}
+			MapWktResult mwr = result.get();
+			List<Geometry> geometries = Stream.of(mwr.wkts)
+					.map(StreamUtils.rethrow(w -> geometryParser.parse(w, mwr.srid)))
+					.collect(Collectors.toList());
+			MapLayer layer = new MapLayer(geometries, mwr.color);
+			layer.addTo(map);
+			map.setCenter(GeoUtils.fromPoint(layer.getCenter()));
 		}
 
 	}
@@ -68,6 +77,21 @@ public class MapWktHandler implements CommandHandler {
 	@Override
 	public MenuItemDescriptor getMenuItemDescriptor() {
 		return new MenuItemDescriptor("File", "Map WKT");
+	}
+
+	private static class MapWktResult {
+
+		private String[] wkts;
+		private Color color;
+		private int srid;
+
+		public MapWktResult(String wkts, Color color, int srid) {
+			super();
+			this.wkts = wkts.split("\n");
+			this.color = color;
+			this.srid = srid;
+		}
+
 	}
 
 }

@@ -20,13 +20,16 @@ import com.lynden.gmapsfx.shapes.Polyline;
 import com.lynden.gmapsfx.shapes.PolylineOptions;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
+import com.vividsolutions.jts.geom.PrecisionModel;
 
 public class GeoUtils {
 
 	public static final int WGS84_SRID = 4326;
+	public static final GeometryFactory WGS84_GEOMETRY_FACTORY = new GeometryFactory(new PrecisionModel(), WGS84_SRID);
 
 	private GeoUtils() {
 
@@ -38,7 +41,7 @@ public class GeoUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static <T extends Geometry> T transform(T geom, int targetSrid) throws GeometryException {
+	public static <T extends Geometry> T transform(T geom, int targetSrid) throws GeometryException {
 		if (geom.getSRID() == targetSrid) {
 			return geom;
 		}
@@ -54,14 +57,14 @@ public class GeoUtils {
 
 	private static CoordinateReferenceSystem getCrs(int srid) throws GeometryException {
 		try {
-			return CRS.decode("EPSG:" + srid);
+			return CRS.decode("EPSG:" + srid, true);
 		} catch (FactoryException e) {
 			throw new GeometryException(e);
 		}
 	}
 
 	public static LatLong convert(Coordinate coor) {
-		return new LatLong(coor.y, coor.y);
+		return new LatLong(coor.y, coor.x);
 	}
 
 	public static Marker convert(Point point) throws GeometryException {
@@ -92,6 +95,11 @@ public class GeoUtils {
 		} else {
 			throw new RuntimeException();
 		}
+	}
+
+	public static LatLong fromPoint(Point point) throws GeometryException {
+		point = transform(point, WGS84_SRID);
+		return new LatLong(point.getY(), point.getX());
 	}
 
 }
