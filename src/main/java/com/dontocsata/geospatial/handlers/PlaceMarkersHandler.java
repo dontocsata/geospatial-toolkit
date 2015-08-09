@@ -7,9 +7,9 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.dontocsata.geospatial.CommandHandler;
 import com.dontocsata.geospatial.MenuItemDescriptor;
 import com.dontocsata.geospatial.MutableUIEventHandler;
+import com.dontocsata.geospatial.setup.MenuCommandHandler;
 import com.lynden.gmapsfx.javascript.event.UIEventHandler;
 import com.lynden.gmapsfx.javascript.event.UIEventType;
 import com.lynden.gmapsfx.javascript.object.Animation;
@@ -26,7 +26,7 @@ import com.vividsolutions.jts.geom.GeometryFactory;
 import netscape.javascript.JSObject;
 
 @Component
-public class PlaceMarkersHandler implements CommandHandler {
+public class PlaceMarkersHandler implements MenuCommandHandler {
 
 	@Autowired
 	private MutableUIEventHandler eventHandler;

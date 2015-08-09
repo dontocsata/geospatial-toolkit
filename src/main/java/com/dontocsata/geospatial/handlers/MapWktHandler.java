@@ -8,13 +8,13 @@ import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.dontocsata.geospatial.CommandHandler;
-import com.dontocsata.geospatial.GeoUtils;
 import com.dontocsata.geospatial.GeometryParser;
 import com.dontocsata.geospatial.MapLayer;
+import com.dontocsata.geospatial.MapLayerControl;
 import com.dontocsata.geospatial.MenuItemDescriptor;
 import com.dontocsata.geospatial.StreamUtils;
 import com.dontocsata.geospatial.config.FxmlTemplateResolver;
+import com.dontocsata.geospatial.setup.MenuCommandHandler;
 import com.lynden.gmapsfx.javascript.object.GoogleMap;
 import com.vividsolutions.jts.geom.Geometry;
 
@@ -28,7 +28,10 @@ import javafx.scene.control.TextField;
 import javafx.scene.paint.Color;
 
 @Component
-public class MapWktHandler implements CommandHandler {
+public class MapWktHandler implements MenuCommandHandler {
+
+	@Autowired
+	private MapLayerControl mapLayerControl;
 
 	@Autowired
 	private GeometryParser geometryParser;
@@ -68,10 +71,8 @@ public class MapWktHandler implements CommandHandler {
 					.map(StreamUtils.rethrow(w -> geometryParser.parse(w, mwr.srid)))
 					.collect(Collectors.toList());
 			MapLayer layer = new MapLayer(geometries, mwr.color);
-			layer.addTo(map);
-			map.setCenter(GeoUtils.fromPoint(layer.getCenter()));
+			mapLayerControl.addAndCenter(layer);
 		}
-
 	}
 
 	@Override

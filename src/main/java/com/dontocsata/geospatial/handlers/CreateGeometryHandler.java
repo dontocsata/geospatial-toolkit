@@ -3,13 +3,13 @@ package com.dontocsata.geospatial.handlers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.dontocsata.geospatial.CommandHandler;
 import com.dontocsata.geospatial.MenuItemDescriptor;
+import com.dontocsata.geospatial.setup.MenuCommandHandler;
 import com.lynden.gmapsfx.javascript.object.GoogleMap;
 import com.vividsolutions.jts.geom.Geometry;
 
 @Component
-public class CreateGeometryHandler implements CommandHandler {
+public class CreateGeometryHandler implements MenuCommandHandler {
 
 	@Autowired
 	private PlaceMarkersHandler placeMarkersHandler;

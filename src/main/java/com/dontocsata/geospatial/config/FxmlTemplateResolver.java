@@ -18,6 +18,14 @@ public class FxmlTemplateResolver {
 	@Autowired
 	private ResourceLoader resourceLoader;
 
+	public FxmlTemplateResolver() {
+
+	}
+
+	public FxmlTemplateResolver(ResourceLoader resourceLoader) {
+		this.resourceLoader = resourceLoader;
+	}
+
 	/**
 	 * Loads a template given the name and controller. The provided controller will be set on the FXML.
 	 */

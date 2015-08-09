@@ -66,7 +66,6 @@ public class MapLayer {
 						map.addMapShape(ms);
 					}
 				}
-
 			} else {
 				MapShape ms = convert(geom);
 				objects.add(ms);

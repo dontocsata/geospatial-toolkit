@@ -5,11 +5,11 @@ import java.io.IOException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.dontocsata.geospatial.CommandHandler;
 import com.dontocsata.geospatial.GeometryException;
 import com.dontocsata.geospatial.GeometryParser;
 import com.dontocsata.geospatial.MenuItemDescriptor;
 import com.dontocsata.geospatial.config.FxmlTemplateResolver;
+import com.dontocsata.geospatial.setup.MenuCommandHandler;
 import com.lynden.gmapsfx.javascript.object.GoogleMap;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
@@ -25,7 +25,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.input.KeyEvent;
 
 @Component
-public class SimpleFunctionExecutor implements CommandHandler {
+public class SimpleFunctionExecutor implements MenuCommandHandler {
 
 	@Autowired
 	private GeometryFactory gf;
