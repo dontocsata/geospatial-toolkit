@@ -30,6 +30,8 @@ import javafx.scene.paint.Color;
 @Component
 public class MapWktHandler implements MenuCommandHandler {
 
+	private int count = 1;
+
 	@Autowired
 	private MapLayerControl mapLayerControl;
 
@@ -48,30 +50,38 @@ public class MapWktHandler implements MenuCommandHandler {
 	@FXML
 	private ColorPicker colorPicker;
 
+	@FXML
+	private TextField nameTextField;
+
 	@Override
 	public void invoke(GoogleMap map) throws Exception {
 		Dialog<MapWktResult> dialog = new Dialog<>();
 		dialog.setTitle("Map WKT");
 		DialogPane pane = templates.loadTemplate("WktDialog.fxml", this);
+		nameTextField.setText("WKT #" + count);
 		pane.getButtonTypes().addAll(ButtonType.OK, ButtonType.CLOSE);
 		dialog.setDialogPane(pane);
 		dialog.setResultConverter(dialogButton -> {
 			if (dialogButton == ButtonType.OK) {
+				String name = nameTextField.getText();
 				String wkts = textArea.getText();
 				int srid = Integer.parseInt(sridInput.getText());
 				Color color = colorPicker.getValue();
-				return new MapWktResult(wkts, color, srid);
+				return new MapWktResult(name, wkts, color, srid);
 			}
 			return null;
 		});
 		Optional<MapWktResult> result = dialog.showAndWait();
 		if(result.isPresent()) {
 			MapWktResult mwr = result.get();
-			List<Geometry> geometries = Stream.of(mwr.wkts)
-					.map(StreamUtils.rethrow(w -> geometryParser.parse(w, mwr.srid)))
-					.collect(Collectors.toList());
-			MapLayer layer = new MapLayer(geometries, mwr.color);
-			mapLayerControl.addAndCenter(layer);
+			if (mwr.wkts != null) {
+				List<Geometry> geometries = Stream.of(mwr.wkts)
+						.map(StreamUtils.rethrow(w -> geometryParser.parse(w, mwr.srid))).collect(Collectors.toList());
+				MapLayer layer = new MapLayer(mwr.name, geometries, mwr.color);
+				mapLayerControl.addAndCenter(layer);
+				count++;
+			}
+
 		}
 	}
 
@@ -82,13 +92,14 @@ public class MapWktHandler implements MenuCommandHandler {
 
 	private static class MapWktResult {
 
+		private String name;
 		private String[] wkts;
 		private Color color;
 		private int srid;
 
-		public MapWktResult(String wkts, Color color, int srid) {
-			super();
-			this.wkts = wkts.split("\n");
+		public MapWktResult(String name, String wkts, Color color, int srid) {
+			this.name = name;
+			this.wkts = wkts != null && !wkts.isEmpty() ? wkts.split("\n") : null;
 			this.color = color;
 			this.srid = srid;
 		}

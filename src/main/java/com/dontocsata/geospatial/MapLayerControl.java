@@ -87,7 +87,7 @@ public class MapLayerControl {
 
 					@Override
 					public String toString(MapLayer object) {
-						return object.toString();
+						return object.getName();
 					}
 
 					@Override

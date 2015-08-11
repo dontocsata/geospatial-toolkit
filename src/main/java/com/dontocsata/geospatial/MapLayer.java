@@ -25,17 +25,19 @@ import javafx.scene.paint.Color;
 
 public class MapLayer {
 
+	private String name;
 	private List<Geometry> geometries;
 	private Color color;
 
 	private Geometry bounds;
 	private Map<GoogleMap, Collection<Object>> mappedObjects;
 
-	public MapLayer(Collection<Geometry> geometries) {
-		this(geometries, Color.CORNFLOWERBLUE);
+	public MapLayer(String name, Collection<Geometry> geometries) {
+		this(name, geometries, Color.CORNFLOWERBLUE);
 	}
 
-	public MapLayer(Collection<Geometry> geometries, Color color) {
+	public MapLayer(String name, Collection<Geometry> geometries, Color color) {
+		this.name = name;
 		this.geometries = geometries.stream().map(StreamUtils.rethrow(g -> GeoUtils.transform(g, GeoUtils.WGS84_SRID)))
 				.collect(Collectors.toList());
 		bounds = new GeometryCollection(geometries.toArray(new Geometry[0]), GeoUtils.WGS84_GEOMETRY_FACTORY)
@@ -135,6 +137,10 @@ public class MapLayer {
 
 	public Color getColor() {
 		return color;
+	}
+
+	public String getName() {
+		return name;
 	}
 
 }
