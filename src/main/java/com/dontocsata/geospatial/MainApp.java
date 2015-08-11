@@ -21,6 +21,7 @@ import com.lynden.gmapsfx.javascript.object.MapTypeIdEnum;
 import javafx.application.Application;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
+import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
@@ -33,6 +34,9 @@ public class MainApp extends Application implements MapComponentInitializedListe
 
 	@FXML
 	private GoogleMapView mapComponent;
+
+	@FXML
+	private ListView<MapLayer> layerList;
 
 	private GoogleMap map;
 	private AnnotationConfigApplicationContext context;
@@ -68,6 +72,8 @@ public class MainApp extends Application implements MapComponentInitializedListe
 		context.getBeanFactory().registerSingleton("googleMap", map);
 		context.scan("com.dontocsata.geospatial");
 		context.refresh();
+
+		context.getBean(MapLayerControl.class).configure(layerList);
 
 		eventHandler = context.getBean(MutableUIEventHandler.class);
 		map.addUIEventHandler(UIEventType.click, eventHandler);

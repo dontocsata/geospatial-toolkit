@@ -8,9 +8,17 @@ import org.springframework.stereotype.Component;
 
 import com.lynden.gmapsfx.javascript.object.GoogleMap;
 
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
-import javafx.collections.ModifiableObservableListBase;
 import javafx.collections.ObservableList;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.cell.CheckBoxListCell;
+import javafx.util.Callback;
+import javafx.util.StringConverter;
 
 /**
  * Handles adding and removing {@link MapLayer} objects from a {@link GoogleMap}. It also handles the layer list for the
@@ -22,34 +30,10 @@ public class MapLayerControl {
 	@Autowired
 	private GoogleMap map;
 
+	private ListView<MapLayer> layerList;
+
 	private List<MapLayer> realLayers = new ArrayList<>();
-	private ModifiableObservableListBase<MapLayer> layers = new ModifiableObservableListBase<MapLayer>() {
-
-		@Override
-		public MapLayer get(int index) {
-			return realLayers.get(index);
-		}
-
-		@Override
-		public int size() {
-			return realLayers.size();
-		}
-
-		@Override
-		protected void doAdd(int index, MapLayer element) {
-			realLayers.add(index, element);
-		}
-
-		@Override
-		protected MapLayer doSet(int index, MapLayer element) {
-			return realLayers.set(index, element);
-		}
-
-		@Override
-		protected MapLayer doRemove(int index) {
-			return realLayers.remove(index);
-		}
-	};
+	private ObservableList<MapLayer> layers = FXCollections.observableArrayList();
 
 	public MapLayerControl() {
 		layers.addListener(new ListChangeListener<MapLayer>() {
@@ -72,6 +56,46 @@ public class MapLayerControl {
 
 		});
 
+	}
+
+	/**
+	 * Configure the {@link MapLayerControl} to update the specified {@link ListView} with changes to the map layers
+	 */
+	void configure(ListView<MapLayer> layerList) {
+		this.layerList = layerList;
+		this.layerList.setItems(layers);
+		Callback<ListView<MapLayer>, ListCell<MapLayer>> cellFactory = CheckBoxListCell
+				.forListView(new Callback<MapLayer, ObservableValue<Boolean>>() {
+
+					@Override
+					public ObservableValue<Boolean> call(MapLayer param) {
+						BooleanProperty toRet = new SimpleBooleanProperty(true);
+						toRet.addListener((obs, wasSelected, isNowSelected) -> {
+							if (isNowSelected) {
+								try {
+									param.addTo(map);
+								} catch (Exception e) {
+									throw new RuntimeException(e);
+								}
+							} else {
+								param.removeFrom(map);
+							}
+						});
+						return toRet;
+					}
+				}, new StringConverter<MapLayer>() {
+
+					@Override
+					public String toString(MapLayer object) {
+						return object.toString();
+					}
+
+					@Override
+					public MapLayer fromString(String string) {
+						throw new UnsupportedOperationException();
+					}
+				});
+		this.layerList.setCellFactory(cellFactory);
 	}
 
 	/**

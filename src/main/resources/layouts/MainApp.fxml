@@ -22,7 +22,7 @@
 			AnchorPane.bottomAnchor="50.0" AnchorPane.rightAnchor="26.0"
 			AnchorPane.topAnchor="88.0" BorderPane.alignment="CENTER">
 			<children>
-				<ListView ></ListView>
+				<ListView fx:id="layerList"></ListView>
 			</children>
 		</VBox>
 	</children>
