@@ -16,7 +16,7 @@
 			prefWidth="761.0" AnchorPane.bottomAnchor="-185.0"
 			AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="-441.0"
 			AnchorPane.topAnchor="0.0" />
-		<VBox alignment="TOP_CENTER" fillWidth="false" layoutX="26.0"
+		<VBox fx:id="vbox" alignment="TOP_CENTER" fillWidth="false" layoutX="26.0"
 			layoutY="29.0" prefHeight="478.0" prefWidth="221.0" spacing="10.0"
 			styleClass="panel-background"
 			AnchorPane.bottomAnchor="50.0" AnchorPane.rightAnchor="26.0"

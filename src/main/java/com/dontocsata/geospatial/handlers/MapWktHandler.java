@@ -87,7 +87,7 @@ public class MapWktHandler implements MenuCommandHandler {
 
 	@Override
 	public MenuItemDescriptor getMenuItemDescriptor() {
-		return new MenuItemDescriptor("File", "Map WKT");
+		return new MenuItemDescriptor("Map", "Map WKT");
 	}
 
 	private static class MapWktResult {

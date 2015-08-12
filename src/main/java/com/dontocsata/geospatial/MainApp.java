@@ -26,6 +26,7 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class MainApp extends Application implements MapComponentInitializedListener {
@@ -34,9 +35,10 @@ public class MainApp extends Application implements MapComponentInitializedListe
 
 	@FXML
 	private GoogleMapView mapComponent;
-
 	@FXML
 	private ListView<MapLayer> layerList;
+	@FXML
+	private VBox vbox;
 
 	private GoogleMap map;
 	private AnnotationConfigApplicationContext context;
@@ -86,8 +88,25 @@ public class MainApp extends Application implements MapComponentInitializedListe
 	private MenuBar setupMenu(Collection<CommandHandler> handlers) {
 		MenuBar menuBar = new MenuBar();
 		Map<String, Menu> menus = new LinkedHashMap<>();
-		menus.put("File", new Menu("File"));
-		menuBar.getMenus().add(menus.get("File"));
+		for (String name : new String[] { "File", "Edit", "View" }) {
+			menus.put(name, new Menu(name));
+			menuBar.getMenus().add(menus.get(name));
+		}
+
+		MenuItem showHide = new MenuItem("Hide Layer List");
+		showHide.setOnAction(ae -> {
+			synchronized (this) {
+				if (vbox.getChildren().isEmpty()) {
+					vbox.getChildren().add(layerList);
+					showHide.setText("Hide Layer List");
+				} else {
+					vbox.getChildren().remove(layerList);
+					showHide.setText("Show Layer List");
+				}
+			}
+		});
+		menus.get("View").getItems().add(showHide);
+
 		for (CommandHandler ch : handlers) {
 			if (ch instanceof MenuCommandHandler) {
 				MenuItemDescriptor mi = ((MenuCommandHandler) ch).getMenuItemDescriptor();
