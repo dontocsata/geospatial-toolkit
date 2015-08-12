@@ -35,6 +35,10 @@ public class GeoUtils {
 
 	}
 
+	public static Point latLongToPoint(LatLong ll) {
+		return WGS84_GEOMETRY_FACTORY.createPoint(new Coordinate(ll.getLongitude(), ll.getLatitude()));
+	}
+
 	public static Geometry transform(Geometry geom, int sourceSrid, int targetSrid) throws GeometryException {
 		geom.setSRID(sourceSrid);
 		return transform(geom, targetSrid);

@@ -1,6 +1,8 @@
 package com.dontocsata.geospatial;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -12,15 +14,19 @@ import com.dontocsata.geospatial.setup.CommandHandler;
 import com.dontocsata.geospatial.setup.MenuCommandHandler;
 import com.lynden.gmapsfx.GoogleMapView;
 import com.lynden.gmapsfx.MapComponentInitializedListener;
+import com.lynden.gmapsfx.javascript.event.MapStateEventType;
 import com.lynden.gmapsfx.javascript.event.UIEventType;
 import com.lynden.gmapsfx.javascript.object.GoogleMap;
 import com.lynden.gmapsfx.javascript.object.LatLong;
 import com.lynden.gmapsfx.javascript.object.MapOptions;
 import com.lynden.gmapsfx.javascript.object.MapTypeIdEnum;
+import com.vividsolutions.jts.geom.Point;
 
 import javafx.application.Application;
 import javafx.fxml.FXML;
+import javafx.geometry.Point2D;
 import javafx.scene.Scene;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
@@ -48,6 +54,10 @@ public class MainApp extends Application implements MapComponentInitializedListe
 	private AnnotationConfigApplicationContext context;
 
 	private MutableUIEventHandler eventHandler;
+
+	private ContextMenu contextMenu;
+
+	private MapLayerControl mapLayerControl;
 
 	public static void main(String[] args) {
 		launch(args);
@@ -78,13 +88,37 @@ public class MainApp extends Application implements MapComponentInitializedListe
 			LatLong latLong = new LatLong((JSObject) jObj.getMember("latLng"));
 			latLongLabel.setText("(" + latLong.getLatitude() + ", " + latLong.getLongitude() + ")");
 		});
+		map.addUIEventHandler(UIEventType.rightclick, jObj -> {
+			LatLong latLong = new LatLong((JSObject) jObj.getMember("latLng"));
+			Point2D point = map.fromLatLngToPoint(latLong);
+			contextMenu = new ContextMenu();
+			MenuItem item = new MenuItem("Drop Marker");
+			contextMenu.getItems().add(item);
+			item.setOnAction(ae -> {
+				Point p = GeoUtils.latLongToPoint(latLong);
+				mapLayerControl.add(new MapLayer("Context Marker", Collections.singletonList(p)));
+			});
+			contextMenu.show(mapComponent, point.getX(), point.getY());
+		});
+		map.addStateEventHandler(MapStateEventType.dragstart, () -> contextMenu.hide());
+		EnumSet<UIEventType> of = EnumSet.of(UIEventType.click, UIEventType.dblclick);
+		for (UIEventType uiet : of) {
+			if (uiet != UIEventType.rightclick) {
+				map.addUIEventHandler(uiet, jObj -> {
+					contextMenu.hide();
+				});
+			}
+		}
 
 		// Register and setup the context
 		context.getBeanFactory().registerSingleton("googleMap", map);
 		context.scan("com.dontocsata.geospatial");
 		context.refresh();
 
-		context.getBean(MapLayerControl.class).configure(layerList);
+		setupContextMenu();
+
+		mapLayerControl = context.getBean(MapLayerControl.class);
+		mapLayerControl.configure(layerList);
 
 		eventHandler = context.getBean(MutableUIEventHandler.class);
 		map.addUIEventHandler(UIEventType.click, eventHandler);
@@ -92,6 +126,10 @@ public class MainApp extends Application implements MapComponentInitializedListe
 		Collection<CommandHandler> commandHandlers = context.getBeansOfType(CommandHandler.class).values();
 		MenuBar menuBar = setupMenu(commandHandlers);
 		parent.getChildren().add(menuBar);
+	}
+
+	private void setupContextMenu() {
+
 	}
 
 	private MenuBar setupMenu(Collection<CommandHandler> handlers) {
