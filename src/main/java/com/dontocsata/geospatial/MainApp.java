@@ -21,6 +21,7 @@ import com.lynden.gmapsfx.javascript.object.MapTypeIdEnum;
 import javafx.application.Application;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
@@ -28,6 +29,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import netscape.javascript.JSObject;
 
 public class MainApp extends Application implements MapComponentInitializedListener {
 
@@ -39,6 +41,8 @@ public class MainApp extends Application implements MapComponentInitializedListe
 	private ListView<MapLayer> layerList;
 	@FXML
 	private VBox vbox;
+	@FXML
+	private Label latLongLabel;
 
 	private GoogleMap map;
 	private AnnotationConfigApplicationContext context;
@@ -56,6 +60,7 @@ public class MainApp extends Application implements MapComponentInitializedListe
 		mapComponent.addMapInializedListener(this);
 
 		Scene scene = new Scene(parent);
+		scene.getStylesheets().add("/css/style.css");
 		stage.setScene(scene);
 		stage.setMaximized(true);
 		stage.show();
@@ -69,6 +74,10 @@ public class MainApp extends Application implements MapComponentInitializedListe
 		options.center(center).mapMarker(true).zoom(9).overviewMapControl(false).panControl(true).rotateControl(false)
 		.scaleControl(true).streetViewControl(false).zoomControl(true).mapType(MapTypeIdEnum.ROADMAP);
 		map = mapComponent.createMap(options);
+		map.addUIEventHandler(UIEventType.mousemove, jObj -> {
+			LatLong latLong = new LatLong((JSObject) jObj.getMember("latLng"));
+			latLongLabel.setText("(" + latLong.getLatitude() + ", " + latLong.getLongitude() + ")");
+		});
 
 		// Register and setup the context
 		context.getBeanFactory().registerSingleton("googleMap", map);

@@ -25,5 +25,6 @@
 				<ListView fx:id="layerList"></ListView>
 			</children>
 		</VBox>
+		<Label fx:id="latLongLabel" AnchorPane.leftAnchor="0.0" AnchorPane.bottomAnchor="0.0" styleClass="label-background"/>
 	</children>
 </AnchorPane>
