@@ -15,7 +15,6 @@ import com.dontocsata.geospatial.MenuItemDescriptor;
 import com.dontocsata.geospatial.StreamUtils;
 import com.dontocsata.geospatial.config.FxmlTemplateResolver;
 import com.dontocsata.geospatial.setup.MenuCommandHandler;
-import com.lynden.gmapsfx.javascript.object.GoogleMap;
 import com.vividsolutions.jts.geom.Geometry;
 
 import javafx.fxml.FXML;
@@ -54,7 +53,7 @@ public class MapWktHandler implements MenuCommandHandler {
 	private TextField nameTextField;
 
 	@Override
-	public void invoke(GoogleMap map) throws Exception {
+	public void invoke() throws Exception {
 		Dialog<MapWktResult> dialog = new Dialog<>();
 		dialog.setTitle("Map WKT");
 		DialogPane pane = templates.loadTemplate("WktDialog.fxml", this);

@@ -34,6 +34,7 @@ public class PlaceMarkersHandler implements MenuCommandHandler {
 	@Autowired
 	private GeometryFactory gf;
 
+	@Autowired
 	private GoogleMap map;
 
 	private List<LatLong> points = new ArrayList<>();
@@ -65,8 +66,7 @@ public class PlaceMarkersHandler implements MenuCommandHandler {
 	};
 
 	@Override
-	public void invoke(GoogleMap map) throws Exception {
-		this.map = map;
+	public void invoke() throws Exception {
 		points = new ArrayList<>();
 		eventHandler.add(handler);
 	}

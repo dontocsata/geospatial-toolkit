@@ -167,7 +167,7 @@ public class MainApp extends Application implements MapComponentInitializedListe
 				menu.getItems().add(item);
 				item.setOnAction(ae -> {
 					try {
-						ch.invoke(map);
+						ch.invoke();
 					} catch (Exception e) {
 						e.printStackTrace();
 					}

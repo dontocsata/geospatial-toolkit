@@ -10,7 +10,6 @@ import com.dontocsata.geospatial.GeometryParser;
 import com.dontocsata.geospatial.MenuItemDescriptor;
 import com.dontocsata.geospatial.config.FxmlTemplateResolver;
 import com.dontocsata.geospatial.setup.MenuCommandHandler;
-import com.lynden.gmapsfx.javascript.object.GoogleMap;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 
@@ -52,7 +51,7 @@ public class SimpleFunctionExecutor implements MenuCommandHandler {
 	private ComboBox<String> comboBox;
 
 	@Override
-	public void invoke(GoogleMap map) throws IOException {
+	public void invoke() throws IOException {
 		Dialog<Void> dialog = new Dialog<>();
 		dialog.setTitle("Simple Geospatial Functions");
 		DialogPane pane = templates.loadTemplate("SimpleFunctionDialog.fxml", this);

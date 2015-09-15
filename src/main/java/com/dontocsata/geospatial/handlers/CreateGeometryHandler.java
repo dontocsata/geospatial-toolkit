@@ -5,7 +5,6 @@ import org.springframework.stereotype.Component;
 
 import com.dontocsata.geospatial.MenuItemDescriptor;
 import com.dontocsata.geospatial.setup.MenuCommandHandler;
-import com.lynden.gmapsfx.javascript.object.GoogleMap;
 import com.vividsolutions.jts.geom.Geometry;
 
 @Component
@@ -15,7 +14,7 @@ public class CreateGeometryHandler implements MenuCommandHandler {
 	private PlaceMarkersHandler placeMarkersHandler;
 
 	@Override
-	public void invoke(GoogleMap map) throws Exception {
+	public void invoke() throws Exception {
 		Geometry geometry = placeMarkersHandler.generate();
 		System.out.println(geometry);
 	}
