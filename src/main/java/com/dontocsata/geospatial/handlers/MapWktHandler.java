@@ -9,11 +9,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.dontocsata.geospatial.GeometryParser;
-import com.dontocsata.geospatial.MapLayer;
 import com.dontocsata.geospatial.MapLayerControl;
 import com.dontocsata.geospatial.MenuItemDescriptor;
 import com.dontocsata.geospatial.StreamUtils;
 import com.dontocsata.geospatial.config.FxmlTemplateResolver;
+import com.dontocsata.geospatial.setup.MapLayer;
 import com.dontocsata.geospatial.setup.MenuCommandHandler;
 import com.vividsolutions.jts.geom.Geometry;
 
@@ -71,12 +71,13 @@ public class MapWktHandler implements MenuCommandHandler {
 			return null;
 		});
 		Optional<MapWktResult> result = dialog.showAndWait();
-		if(result.isPresent()) {
+		if (result.isPresent()) {
 			MapWktResult mwr = result.get();
 			if (mwr.wkts != null) {
 				List<Geometry> geometries = Stream.of(mwr.wkts)
 						.map(StreamUtils.rethrow(w -> geometryParser.parse(w, mwr.srid))).collect(Collectors.toList());
-				MapLayer layer = new MapLayer(mwr.name, geometries, mwr.color);
+				MapLayer layer = new MapLayer.Builder().setName(mwr.name).setGeometries(geometries).setColor(mwr.color)
+						.build();
 				mapLayerControl.addAndCenter(layer);
 				count++;
 			}

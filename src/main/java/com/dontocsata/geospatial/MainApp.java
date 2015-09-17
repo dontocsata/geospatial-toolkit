@@ -11,6 +11,7 @@ import org.springframework.core.io.DefaultResourceLoader;
 
 import com.dontocsata.geospatial.config.FxmlTemplateResolver;
 import com.dontocsata.geospatial.setup.CommandHandler;
+import com.dontocsata.geospatial.setup.MapLayer;
 import com.dontocsata.geospatial.setup.MenuCommandHandler;
 import com.lynden.gmapsfx.GoogleMapView;
 import com.lynden.gmapsfx.MapComponentInitializedListener;
@@ -96,7 +97,8 @@ public class MainApp extends Application implements MapComponentInitializedListe
 			contextMenu.getItems().add(item);
 			item.setOnAction(ae -> {
 				Point p = GeoUtils.latLongToPoint(latLong);
-				mapLayerControl.add(new MapLayer("Context Marker", Collections.singletonList(p)));
+				mapLayerControl.add(new MapLayer.Builder().setName("Context Marker")
+						.setGeometries(Collections.singletonList(p)).build());
 			});
 			contextMenu.show(mapComponent, point.getX(), point.getY());
 		});

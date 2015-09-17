@@ -1,13 +1,22 @@
-package com.dontocsata.geospatial;
+package com.dontocsata.geospatial.setup;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.dontocsata.geospatial.GeoUtils;
+import com.dontocsata.geospatial.GeometryException;
+import com.dontocsata.geospatial.StreamUtils;
+import com.dontocsata.geospatial.layer.MapLayerEventType;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import com.lynden.gmapsfx.javascript.object.GoogleMap;
 import com.lynden.gmapsfx.javascript.object.MVCArray;
 import com.lynden.gmapsfx.javascript.object.MapShape;
@@ -28,21 +37,20 @@ public class MapLayer {
 	private String name;
 	private List<Geometry> geometries;
 	private Color color;
+	private Multimap<MapLayerEventType, Consumer<MapLayerEvent>> listeners;
 
 	private Geometry bounds;
 	private Map<GoogleMap, Collection<Object>> mappedObjects;
 
-	public MapLayer(String name, Collection<Geometry> geometries) {
-		this(name, geometries, Color.CORNFLOWERBLUE);
+	private MapLayer() {
+
 	}
 
-	public MapLayer(String name, Collection<Geometry> geometries, Color color) {
-		this.name = name;
-		this.geometries = geometries.stream().map(StreamUtils.rethrow(g -> GeoUtils.transform(g, GeoUtils.WGS84_SRID)))
+	private void init() {
+		geometries = geometries.stream().map(StreamUtils.rethrow(g -> GeoUtils.transform(g, GeoUtils.WGS84_SRID)))
 				.collect(Collectors.toList());
 		bounds = new GeometryCollection(geometries.toArray(new Geometry[0]), GeoUtils.WGS84_GEOMETRY_FACTORY)
 				.getEnvelope();
-		this.color = color;
 		mappedObjects = new ConcurrentHashMap<>();
 	}
 
@@ -141,6 +149,97 @@ public class MapLayer {
 
 	public String getName() {
 		return name;
+	}
+
+	public static class Builder {
+		private String name;
+		private List<Geometry> geometries = new ArrayList<>();
+		private Color color = Color.CORNFLOWERBLUE;
+		private Multimap<MapLayerEventType, Consumer<MapLayerEvent>> listeners = Multimaps.newMultimap(new HashMap<>(),
+				ArrayList::new);
+
+		private boolean built = false;
+
+		public MapLayer build() {
+			if (built) {
+				throw new IllegalStateException("The MapLayer has already been built.");
+			}
+			validate();
+			built = true;
+			MapLayer layer = new MapLayer();
+			layer.name = name;
+			layer.geometries = geometries;
+			layer.color = color;
+			layer.listeners = listeners;
+			layer.init();
+			return layer;
+		}
+
+		private void validate() {
+			if (name == null) {
+				throw new IllegalStateException("The name cannot be null.");
+			}
+		}
+
+		public Builder setName(String name) {
+			if (built) {
+				throw new IllegalStateException("The MapLayer has already been built.");
+			}
+			if (name == null) {
+				throw new IllegalArgumentException("The name cannot be null.");
+			}
+			this.name = name;
+			return this;
+		}
+
+		public Builder addGeometry(Geometry geom) {
+			if (built) {
+				throw new IllegalStateException("The MapLayer has already been built.");
+			}
+			if (geom == null) {
+				throw new IllegalArgumentException("The geometry cannot be null.");
+			}
+			geometries.add(geom);
+			return this;
+		}
+
+		public Builder setGeometries(List<Geometry> geometries) {
+			if (built) {
+				throw new IllegalStateException("The MapLayer has already been built.");
+			}
+			if (geometries == null) {
+				throw new IllegalArgumentException("The geometries cannot be null.");
+			}
+			this.geometries = new ArrayList<>(geometries);
+			return this;
+		}
+
+		public Builder setColor(Color color) {
+			if (built) {
+				throw new IllegalStateException("The MapLayer has already been built.");
+			}
+			if (color == null) {
+				throw new IllegalArgumentException("The color cannot be null.");
+			}
+			this.color = color;
+			return this;
+		}
+
+		public Builder addListener(MapLayerEventType type, Consumer<MapLayerEvent> listener) {
+			return addListener(EnumSet.of(type), listener);
+		}
+
+		public Builder addListener(EnumSet<MapLayerEventType> types, Consumer<MapLayerEvent> listener) {
+			if (built) {
+				throw new IllegalStateException("The MapLayer has already been built.");
+			}
+			if (listener == null) {
+				throw new IllegalArgumentException("The listener cannot be null.");
+			}
+			types.forEach(t -> listeners.put(t, listener));
+			return this;
+		}
+
 	}
 
 }
