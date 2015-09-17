@@ -178,6 +178,22 @@ public class MapLayer {
 
 		private boolean built = false;
 
+		public Builder() {
+
+		}
+
+		/**
+		 * Creates a builder that is a copy of the specified {@link MapLayer}
+		 * 
+		 * @param layer
+		 */
+		public Builder(MapLayer layer) {
+			name = layer.name;
+			geometries.addAll(layer.geometries);
+			color = layer.color;
+			listeners.putAll(layer.listeners);
+		}
+
 		public MapLayer build() {
 			if (built) {
 				throw new IllegalStateException("The MapLayer has already been built.");
@@ -218,6 +234,17 @@ public class MapLayer {
 				throw new IllegalArgumentException("The geometry cannot be null.");
 			}
 			geometries.add(geom);
+			return this;
+		}
+
+		public Builder removeGeometry(Geometry geom) {
+			if (built) {
+				throw new IllegalStateException("The MapLayer has already been built.");
+			}
+			if (geom == null) {
+				throw new IllegalArgumentException("The geometry cannot be null.");
+			}
+			geometries.remove(geom);
 			return this;
 		}
 
