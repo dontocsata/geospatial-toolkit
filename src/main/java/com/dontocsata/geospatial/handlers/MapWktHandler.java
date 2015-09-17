@@ -13,7 +13,7 @@ import com.dontocsata.geospatial.MapLayerControl;
 import com.dontocsata.geospatial.MenuItemDescriptor;
 import com.dontocsata.geospatial.StreamUtils;
 import com.dontocsata.geospatial.config.FxmlTemplateResolver;
-import com.dontocsata.geospatial.setup.MapLayer;
+import com.dontocsata.geospatial.layer.MapLayer;
 import com.dontocsata.geospatial.setup.MenuCommandHandler;
 import com.vividsolutions.jts.geom.Geometry;
 

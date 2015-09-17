@@ -1,4 +1,4 @@
-package com.dontocsata.geospatial.setup;
+package com.dontocsata.geospatial.layer;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -14,7 +14,6 @@ import java.util.stream.Stream;
 import com.dontocsata.geospatial.GeoUtils;
 import com.dontocsata.geospatial.GeometryException;
 import com.dontocsata.geospatial.StreamUtils;
-import com.dontocsata.geospatial.layer.MapLayerEventType;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.lynden.gmapsfx.javascript.object.GoogleMap;
@@ -54,6 +53,22 @@ public class MapLayer {
 		mappedObjects = new ConcurrentHashMap<>();
 	}
 
+	private void addListener(GoogleMap map, Geometry geom, Marker marker, MapShape shape) {
+		for (MapLayerEventType type : listeners.keySet()) {
+			map.addUIEventHandler(marker, type.getUiEventType(), jsObj -> {
+				MapLayerEvent event = null;
+				if (marker == null) {
+					event=new MapLayerEvent(marker, geom);
+				} else {
+					event=new MapLayerEvent(shape, geom);
+				}
+				for (Consumer<MapLayerEvent> listener : listeners.get(type)) {
+					listener.accept(event);
+				}
+			});
+		}
+	}
+
 	public void addTo(GoogleMap map) throws GeometryException {
 		Collection<Object> objects = new ArrayList<>();
 		mappedObjects.put(map, objects);
@@ -61,6 +76,7 @@ public class MapLayer {
 			if (geom instanceof Point) {
 				Marker marker = GeoUtils.convert((Point) geom);
 				objects.add(marker);
+				addListener(map, geom, marker, null);
 				map.addMarker(marker);
 			} else if (geom instanceof GeometryCollection) {
 				GeometryCollection gc = (GeometryCollection) geom;
@@ -69,18 +85,20 @@ public class MapLayer {
 					if (g instanceof Point) {
 						Marker marker = GeoUtils.convert((Point) g);
 						objects.add(marker);
+						addListener(map, geom, marker, null);
 						map.addMarker(marker);
 					} else {
 						MapShape ms = convert(g);
 						objects.add(ms);
+						addListener(map, geom, null, ms);
 						map.addMapShape(ms);
 					}
 				}
 			} else {
 				MapShape ms = convert(geom);
 				objects.add(ms);
+				addListener(map, geom, null, ms);
 				map.addMapShape(ms);
-
 			}
 		}
 	}

@@ -1,4 +1,4 @@
-package com.dontocsata.geospatial.setup;
+package com.dontocsata.geospatial.layer;
 
 public interface MapLayerEventListener {
 
