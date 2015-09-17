@@ -11,6 +11,7 @@ import org.springframework.core.io.DefaultResourceLoader;
 
 import com.dontocsata.geospatial.config.FxmlTemplateResolver;
 import com.dontocsata.geospatial.layer.MapLayer;
+import com.dontocsata.geospatial.layer.MapLayerEventType;
 import com.dontocsata.geospatial.setup.CommandHandler;
 import com.dontocsata.geospatial.setup.MenuCommandHandler;
 import com.lynden.gmapsfx.GoogleMapView;
@@ -18,6 +19,8 @@ import com.lynden.gmapsfx.MapComponentInitializedListener;
 import com.lynden.gmapsfx.javascript.event.MapStateEventType;
 import com.lynden.gmapsfx.javascript.event.UIEventType;
 import com.lynden.gmapsfx.javascript.object.GoogleMap;
+import com.lynden.gmapsfx.javascript.object.InfoWindow;
+import com.lynden.gmapsfx.javascript.object.InfoWindowOptions;
 import com.lynden.gmapsfx.javascript.object.LatLong;
 import com.lynden.gmapsfx.javascript.object.MapOptions;
 import com.lynden.gmapsfx.javascript.object.MapTypeIdEnum;
@@ -97,8 +100,14 @@ public class MainApp extends Application implements MapComponentInitializedListe
 			contextMenu.getItems().add(item);
 			item.setOnAction(ae -> {
 				Point p = GeoUtils.latLongToPoint(latLong);
-				mapLayerControl.add(new MapLayer.Builder().setName("Context Marker")
-						.setGeometries(Collections.singletonList(p)).build());
+				MapLayer layer = new MapLayer.Builder().setName("Context Marker")
+						.setGeometries(Collections.singletonList(p)).addListener(MapLayerEventType.CLICK, event -> {
+							InfoWindowOptions iwo = new InfoWindowOptions();
+							iwo.position(latLong);
+							iwo.content("(" + latLong.getLatitude() + ", " + latLong.getLongitude() + ")");
+							new InfoWindow(iwo).open(map, event.getMarker());
+						}).build();
+				mapLayerControl.add(layer);
 			});
 			contextMenu.show(mapComponent, point.getX(), point.getY());
 		});
