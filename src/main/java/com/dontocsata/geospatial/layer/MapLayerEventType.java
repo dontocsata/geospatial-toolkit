@@ -4,7 +4,9 @@ import com.lynden.gmapsfx.javascript.event.UIEventType;
 
 public enum MapLayerEventType {
 
-	CLICK(UIEventType.click);
+	CLICK(UIEventType.click),
+	DOUBLE_CLICK(UIEventType.dblclick),
+	RIGHT_CLICK(UIEventType.rightclick);
 
 	private UIEventType uiEventType;
 

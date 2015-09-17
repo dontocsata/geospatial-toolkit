@@ -11,7 +11,6 @@ import org.springframework.core.io.DefaultResourceLoader;
 
 import com.dontocsata.geospatial.config.FxmlTemplateResolver;
 import com.dontocsata.geospatial.layer.MapLayer;
-import com.dontocsata.geospatial.layer.MapLayerEventType;
 import com.dontocsata.geospatial.setup.CommandHandler;
 import com.dontocsata.geospatial.setup.MenuCommandHandler;
 import com.lynden.gmapsfx.GoogleMapView;
