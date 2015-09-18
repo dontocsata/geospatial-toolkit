@@ -1,18 +1,8 @@
 package com.dontocsata.geospatial.layer;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import com.dontocsata.geospatial.GeoUtils;
 import com.dontocsata.geospatial.GeometryException;
+import com.dontocsata.geospatial.GeometryWrapper;
 import com.dontocsata.geospatial.StreamUtils;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
@@ -28,13 +18,23 @@ import com.vividsolutions.jts.geom.GeometryCollection;
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
-
 import javafx.scene.paint.Color;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class MapLayer {
 
 	private String name;
-	private List<Geometry> geometries;
+	private List<GeometryWrapper> geometries;
 	private Color color;
 	private Multimap<MapLayerEventType, Consumer<MapLayerEvent>> listeners;
 
@@ -46,21 +46,21 @@ public class MapLayer {
 	}
 
 	private void init() {
-		geometries = geometries.stream().map(StreamUtils.rethrow(g -> GeoUtils.transform(g, GeoUtils.WGS84_SRID)))
+		geometries = geometries.stream().map(StreamUtils.rethrow(g -> g.transformGeometry(GeoUtils.WGS84_SRID)))
 				.collect(Collectors.toList());
-		bounds = new GeometryCollection(geometries.toArray(new Geometry[0]), GeoUtils.WGS84_GEOMETRY_FACTORY)
+		bounds = new GeometryCollection(geometries.stream().map(GeometryWrapper::getGeometry).collect(Collectors.toList()).toArray(new Geometry[0]), GeoUtils.WGS84_GEOMETRY_FACTORY)
 				.getEnvelope();
 		mappedObjects = new ConcurrentHashMap<>();
 	}
 
-	private void addListener(GoogleMap map, Geometry geom, Marker marker, MapShape shape) {
+	private void addListener(GoogleMap map, GeometryWrapper geom, Marker marker, MapShape shape) {
 		for (MapLayerEventType type : listeners.keySet()) {
 			map.addUIEventHandler(marker, type.getUiEventType(), jsObj -> {
 				MapLayerEvent event = null;
 				if (marker == null) {
-					event=new MapLayerEvent(marker, geom);
+					event = new MapLayerEvent(marker, geom);
 				} else {
-					event=new MapLayerEvent(shape, geom);
+					event = new MapLayerEvent(shape, geom);
 				}
 				for (Consumer<MapLayerEvent> listener : listeners.get(type)) {
 					listener.accept(event);
@@ -72,14 +72,14 @@ public class MapLayer {
 	public void addTo(GoogleMap map) throws GeometryException {
 		Collection<Object> objects = new ArrayList<>();
 		mappedObjects.put(map, objects);
-		for (Geometry geom : geometries) {
-			if (geom instanceof Point) {
-				Marker marker = GeoUtils.convert((Point) geom);
+		for (GeometryWrapper geom : geometries) {
+			if (geom.isPoint()) {
+				Marker marker = GeoUtils.convert((Point) geom.getGeometry());
 				objects.add(marker);
 				addListener(map, geom, marker, null);
 				map.addMarker(marker);
-			} else if (geom instanceof GeometryCollection) {
-				GeometryCollection gc = (GeometryCollection) geom;
+			} else if (geom.isGeometryCollection()) {
+				GeometryCollection gc = (GeometryCollection) geom.getGeometry();
 				for (int i = 0; i < gc.getNumGeometries(); i++) {
 					Geometry g = gc.getGeometryN(i);
 					if (g instanceof Point) {
@@ -95,7 +95,7 @@ public class MapLayer {
 					}
 				}
 			} else {
-				MapShape ms = convert(geom);
+				MapShape ms = convert(geom.getGeometry());
 				objects.add(ms);
 				addListener(map, geom, null, ms);
 				map.addMapShape(ms);
@@ -170,8 +170,9 @@ public class MapLayer {
 	}
 
 	public static class Builder {
+
 		private String name;
-		private List<Geometry> geometries = new ArrayList<>();
+		private List<GeometryWrapper> geometries = new ArrayList<>();
 		private Color color = Color.CORNFLOWERBLUE;
 		private Multimap<MapLayerEventType, Consumer<MapLayerEvent>> listeners = Multimaps.newMultimap(new HashMap<>(),
 				ArrayList::new);
@@ -184,7 +185,7 @@ public class MapLayer {
 
 		/**
 		 * Creates a builder that is a copy of the specified {@link MapLayer}
-		 * 
+		 *
 		 * @param layer
 		 */
 		public Builder(MapLayer layer) {
@@ -226,7 +227,7 @@ public class MapLayer {
 			return this;
 		}
 
-		public Builder addGeometry(Geometry geom) {
+		public Builder addGeometry(GeometryWrapper geom) {
 			if (built) {
 				throw new IllegalStateException("The MapLayer has already been built.");
 			}
@@ -237,7 +238,7 @@ public class MapLayer {
 			return this;
 		}
 
-		public Builder removeGeometry(Geometry geom) {
+		public Builder removeGeometry(GeometryWrapper geom) {
 			if (built) {
 				throw new IllegalStateException("The MapLayer has already been built.");
 			}
@@ -248,7 +249,7 @@ public class MapLayer {
 			return this;
 		}
 
-		public Builder setGeometries(List<Geometry> geometries) {
+		public Builder setGeometries(List<GeometryWrapper> geometries) {
 			if (built) {
 				throw new IllegalStateException("The MapLayer has already been built.");
 			}

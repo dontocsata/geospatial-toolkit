@@ -1,16 +1,8 @@
 package com.dontocsata.geospatial;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
-
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.core.io.DefaultResourceLoader;
-
 import com.dontocsata.geospatial.config.FxmlTemplateResolver;
 import com.dontocsata.geospatial.layer.MapLayer;
+import com.dontocsata.geospatial.layer.MapLayerEventType;
 import com.dontocsata.geospatial.setup.CommandHandler;
 import com.dontocsata.geospatial.setup.MenuCommandHandler;
 import com.lynden.gmapsfx.GoogleMapView;
@@ -24,7 +16,6 @@ import com.lynden.gmapsfx.javascript.object.LatLong;
 import com.lynden.gmapsfx.javascript.object.MapOptions;
 import com.lynden.gmapsfx.javascript.object.MapTypeIdEnum;
 import com.vividsolutions.jts.geom.Point;
-
 import javafx.application.Application;
 import javafx.fxml.FXML;
 import javafx.geometry.Point2D;
@@ -39,6 +30,13 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import netscape.javascript.JSObject;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.core.io.DefaultResourceLoader;
+
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class MainApp extends Application implements MapComponentInitializedListener {
 
@@ -61,6 +59,8 @@ public class MainApp extends Application implements MapComponentInitializedListe
 	private ContextMenu contextMenu;
 
 	private MapLayerControl mapLayerControl;
+
+	private MapLayer droppedMarkersLayer;
 
 	public static void main(String[] args) {
 		launch(args);
@@ -99,14 +99,32 @@ public class MainApp extends Application implements MapComponentInitializedListe
 			contextMenu.getItems().add(item);
 			item.setOnAction(ae -> {
 				Point p = GeoUtils.latLongToPoint(latLong);
-				MapLayer layer = new MapLayer.Builder().setName("Context Marker")
-						.setGeometries(Collections.singletonList(p)).addListener(MapLayerEventType.CLICK, event -> {
+				MapLayer.Builder builder = null;
+				boolean addToControl = false;
+				if (droppedMarkersLayer == null) {
+					builder = new MapLayer.Builder();
+					addToControl=true;
+				} else {
+					builder = new MapLayer.Builder(droppedMarkersLayer);
+				}
+				droppedMarkersLayer = builder.setName("Dropped Markers").addGeometry(new GeometryWrapper(p))
+						.addListener(MapLayerEventType.CLICK, event -> {
 							InfoWindowOptions iwo = new InfoWindowOptions();
 							iwo.position(latLong);
 							iwo.content("(" + latLong.getLatitude() + ", " + latLong.getLongitude() + ")");
 							new InfoWindow(iwo).open(map, event.getMarker());
+						}).addListener(MapLayerEventType.RIGHT_CLICK, event -> {
+							ContextMenu menu = new ContextMenu();
+							MenuItem remove = new MenuItem("Remove Marker");
+							remove.setOnAction(actionEvent -> {
+								System.out.println("Remove!");
+							});
+							menu.getItems().add(item);
+							menu.show(mapComponent, point.getX(), point.getY());
 						}).build();
-				mapLayerControl.add(layer);
+				if (addToControl) {
+					mapLayerControl.add(droppedMarkersLayer);
+				}
 			});
 			contextMenu.show(mapComponent, point.getX(), point.getY());
 		});

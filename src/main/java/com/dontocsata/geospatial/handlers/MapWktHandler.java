@@ -1,22 +1,13 @@
 package com.dontocsata.geospatial.handlers;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import com.dontocsata.geospatial.GeometryParser;
+import com.dontocsata.geospatial.GeometryWrapper;
 import com.dontocsata.geospatial.MapLayerControl;
 import com.dontocsata.geospatial.MenuItemDescriptor;
 import com.dontocsata.geospatial.StreamUtils;
 import com.dontocsata.geospatial.config.FxmlTemplateResolver;
 import com.dontocsata.geospatial.layer.MapLayer;
 import com.dontocsata.geospatial.setup.MenuCommandHandler;
-import com.vividsolutions.jts.geom.Geometry;
-
 import javafx.fxml.FXML;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ColorPicker;
@@ -25,6 +16,13 @@ import javafx.scene.control.DialogPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.paint.Color;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 public class MapWktHandler implements MenuCommandHandler {
@@ -74,8 +72,10 @@ public class MapWktHandler implements MenuCommandHandler {
 		if (result.isPresent()) {
 			MapWktResult mwr = result.get();
 			if (mwr.wkts != null) {
-				List<Geometry> geometries = Stream.of(mwr.wkts)
-						.map(StreamUtils.rethrow(w -> geometryParser.parse(w, mwr.srid))).collect(Collectors.toList());
+				List<GeometryWrapper> geometries = Stream.of(mwr.wkts)
+						.map(StreamUtils.rethrow(w -> geometryParser.parse(w, mwr.srid)))
+						.map(GeometryWrapper::new)
+						.collect(Collectors.toList());
 				MapLayer layer = new MapLayer.Builder().setName(mwr.name).setGeometries(geometries).setColor(mwr.color)
 						.build();
 				mapLayerControl.addAndCenter(layer);
