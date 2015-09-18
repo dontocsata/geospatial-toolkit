@@ -3,6 +3,10 @@ package com.dontocsata.geospatial;
 import com.dontocsata.geospatial.config.FxmlTemplateResolver;
 import com.dontocsata.geospatial.layer.MapLayer;
 import com.dontocsata.geospatial.layer.MapLayerEventType;
+import com.dontocsata.geospatial.plugin.MenuItemBinding;
+import com.dontocsata.geospatial.plugin.PluginManager;
+import com.dontocsata.geospatial.plugin.PluginRunner;
+import com.dontocsata.geospatial.plugin.PluginWrapper;
 import com.dontocsata.geospatial.setup.CommandHandler;
 import com.dontocsata.geospatial.setup.MenuCommandHandler;
 import com.lynden.gmapsfx.GoogleMapView;
@@ -30,8 +34,6 @@ import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.effect.DropShadow;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
@@ -44,6 +46,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.io.DefaultResourceLoader;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
@@ -74,6 +77,8 @@ public class MainApp extends Application implements MapComponentInitializedListe
 	private MapLayerControl mapLayerControl;
 
 	private MapLayer droppedMarkersLayer;
+
+	private PluginManager pluginManager;
 
 	private static final int SPLASH_WIDTH = 450;
 	private static final int SPLASH_HEIGHT = 225;
@@ -109,12 +114,11 @@ public class MainApp extends Application implements MapComponentInitializedListe
 		parent = new FxmlTemplateResolver(new DefaultResourceLoader()).loadTemplate("MainApp.fxml", this);
 		mapComponent.addMapInializedListener(this);
 
-
 		//stage.setMaximized(true);
 	}
 
 	private void showSplash(Stage initStage) {
-		this.initalStage=initStage;
+		this.initalStage = initStage;
 		Scene splashScene = new Scene(splashLayout);
 		initStage.initStyle(StageStyle.UNDECORATED);
 		final Rectangle2D bounds = Screen.getPrimary().getBounds();
@@ -132,7 +136,7 @@ public class MainApp extends Application implements MapComponentInitializedListe
 		LatLong center = new LatLong(39, -76);
 		MapOptions options = new MapOptions();
 		options.center(center).mapMarker(true).zoom(9).overviewMapControl(false).panControl(true).rotateControl(false)
-		.scaleControl(true).streetViewControl(false).zoomControl(true).mapType(MapTypeIdEnum.ROADMAP);
+				.scaleControl(true).streetViewControl(false).zoomControl(true).mapType(MapTypeIdEnum.ROADMAP);
 		map = mapComponent.createMap(options);
 		map.addUIEventHandler(UIEventType.mousemove, jObj -> {
 			LatLong latLong = new LatLong((JSObject) jObj.getMember("latLng"));
@@ -150,7 +154,7 @@ public class MainApp extends Application implements MapComponentInitializedListe
 				boolean addToControl = false;
 				if (droppedMarkersLayer == null) {
 					builder = new MapLayer.Builder();
-					addToControl=true;
+					addToControl = true;
 				} else {
 					builder = new MapLayer.Builder(droppedMarkersLayer);
 				}
@@ -204,6 +208,23 @@ public class MainApp extends Application implements MapComponentInitializedListe
 		MenuBar menuBar = setupMenu(commandHandlers);
 		parent.getChildren().add(menuBar);
 
+		progressText.setText("Loading Plugins");
+		pluginManager = new PluginManager(context);
+		try {
+			pluginManager.loadPlugins();
+		} catch (IOException e) {
+			log.error("Exception loading plugins", e);
+			//TODO show some dialog here?
+		}
+		for(PluginWrapper plugin:pluginManager.getAllPlugins()){
+			for(PluginRunner runner:plugin.getRunners()){
+				if(runner.getClass().isAnnotationPresent(MenuItemBinding.class)){
+					MenuItemBinding binding = runner.getClass().getAnnotation(MenuItemBinding.class);
+
+				}
+			}
+		}
+
 		progressText.setText("Initializing Main UI");
 		Stage stage = new Stage(StageStyle.DECORATED);
 		stage.setTitle("Geospatial Toolkit");
@@ -221,7 +242,7 @@ public class MainApp extends Application implements MapComponentInitializedListe
 	private MenuBar setupMenu(Collection<CommandHandler> handlers) {
 		MenuBar menuBar = new MenuBar();
 		Map<String, Menu> menus = new LinkedHashMap<>();
-		for (String name : new String[] { "File", "Edit", "View" }) {
+		for (String name : new String[]{"File", "Edit", "View"}) {
 			menus.put(name, new Menu(name));
 			menuBar.getMenus().add(menus.get(name));
 		}
