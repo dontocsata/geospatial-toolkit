@@ -19,6 +19,8 @@ import com.vividsolutions.jts.geom.Point;
 import javafx.application.Application;
 import javafx.fxml.FXML;
 import javafx.geometry.Point2D;
+import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
@@ -26,10 +28,19 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.ProgressBar;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import netscape.javascript.JSObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.io.DefaultResourceLoader;
 
@@ -39,6 +50,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class MainApp extends Application implements MapComponentInitializedListener {
+
+	private static final Logger log = LoggerFactory.getLogger(MainApp.class);
 
 	private AnchorPane parent;
 
@@ -62,25 +75,59 @@ public class MainApp extends Application implements MapComponentInitializedListe
 
 	private MapLayer droppedMarkersLayer;
 
+	private static final int SPLASH_WIDTH = 450;
+	private static final int SPLASH_HEIGHT = 225;
+	private Pane splashLayout;
+	private ProgressBar loadProgress;
+	private Label progressText;
+	private Stage initalStage;
+
 	public static void main(String[] args) {
 		launch(args);
 	}
 
 	@Override
+	public void init() throws Exception {
+		//ImageView splash = new ImageView(new Image("http://fxexperience.com/wp-content/uploads/2010/06/logo.png"));
+		loadProgress = new ProgressBar();
+		loadProgress.setPrefWidth(SPLASH_WIDTH - 20);
+		progressText = new Label();
+		splashLayout = new VBox();
+		//splashLayout.getChildren().add(splash);
+		splashLayout.getChildren().addAll(loadProgress, progressText);
+		progressText.setAlignment(Pos.CENTER);
+		splashLayout.setStyle("-fx-padding: 5; -fx-background-color: cornsilk; -fx-border-width:5; -fx-border-color: linear-gradient(to bottom, chocolate, derive(chocolate, 50%));");
+		splashLayout.setEffect(new DropShadow());
+	}
+
+	@Override
 	public void start(Stage stage) throws Exception {
+		showSplash(stage);
+		progressText.setText("Initializing Spring Context");
 		context = new AnnotationConfigApplicationContext();
+		progressText.setText("Initializing Map");
 		parent = new FxmlTemplateResolver(new DefaultResourceLoader()).loadTemplate("MainApp.fxml", this);
 		mapComponent.addMapInializedListener(this);
 
-		Scene scene = new Scene(parent);
-		scene.getStylesheets().add("/css/style.css");
-		stage.setScene(scene);
-		stage.setMaximized(true);
-		stage.show();
+
+		//stage.setMaximized(true);
+	}
+
+	private void showSplash(Stage initStage) {
+		this.initalStage=initStage;
+		Scene splashScene = new Scene(splashLayout);
+		initStage.initStyle(StageStyle.UNDECORATED);
+		final Rectangle2D bounds = Screen.getPrimary().getBounds();
+		initStage.setScene(splashScene);
+		initStage.setX(bounds.getMinX() + bounds.getWidth() / 2 - SPLASH_WIDTH / 2);
+		initStage.setY(bounds.getMinY() + bounds.getHeight() / 2 - SPLASH_HEIGHT / 2);
+		initStage.show();
 	}
 
 	@Override
 	public void mapInitialized() {
+		log.debug("Map initialized");
+		progressText.setText("Configuring Map Components");
 		// Configure map
 		LatLong center = new LatLong(39, -76);
 		MapOptions options = new MapOptions();
@@ -138,6 +185,7 @@ public class MainApp extends Application implements MapComponentInitializedListe
 			}
 		}
 
+		progressText.setText("Configuring Spring Components");
 		// Register and setup the context
 		context.getBeanFactory().registerSingleton("googleMap", map);
 		context.scan("com.dontocsata.geospatial");
@@ -151,9 +199,19 @@ public class MainApp extends Application implements MapComponentInitializedListe
 		eventHandler = context.getBean(MutableUIEventHandler.class);
 		map.addUIEventHandler(UIEventType.click, eventHandler);
 
+		progressText.setText("Detecting Handlers");
 		Collection<CommandHandler> commandHandlers = context.getBeansOfType(CommandHandler.class).values();
 		MenuBar menuBar = setupMenu(commandHandlers);
 		parent.getChildren().add(menuBar);
+
+		progressText.setText("Initializing Main UI");
+		Stage stage = new Stage(StageStyle.DECORATED);
+		stage.setTitle("Geospatial Toolkit");
+		Scene scene = new Scene(parent);
+		scene.getStylesheets().add("/css/style.css");
+		stage.setScene(scene);
+		stage.show();
+		initalStage.hide();
 	}
 
 	private void setupContextMenu() {
