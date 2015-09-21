@@ -20,14 +20,25 @@ public class PluginWrapper {
 		this.runners = runners;
 	}
 
-	public void start() {
-		runners.forEach(PluginRunner::start);
-		state=PluginState.STARTED;
+	/**
+	 * Construct the wrapper with the specified PluginState. This is typically used to mark errors.
+	 */
+	public PluginWrapper(Plugin plugin, Class<?> pluginClass, PluginState state) {
+		this.plugin = plugin;
+		this.pluginClass = pluginClass;
+		this.state = state;
 	}
 
-	public void stop() {
+	public void start() throws Exception {
+		for (PluginRunner runner : runners) {
+			runner.start();
+		}
+		state = PluginState.STARTED;
+	}
+
+	public void stop() throws Exception {
 		runners.forEach(PluginRunner::stop);
-		state=PluginState.STOPPED;
+		state = PluginState.STOPPED;
 	}
 
 	public Plugin getPlugin() {
@@ -45,6 +56,11 @@ public class PluginWrapper {
 	public PluginState getState() {
 		return state;
 	}
+
+	void setState(PluginState state) {
+		this.state = state;
+	}
+
 
 	@Override
 	public String toString() {

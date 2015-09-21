@@ -5,7 +5,7 @@ package com.dontocsata.geospatial.plugin;
  */
 public interface PluginRunner {
 
-	public void start();
+	public void start() throws Exception;
 
 	public void stop();
 

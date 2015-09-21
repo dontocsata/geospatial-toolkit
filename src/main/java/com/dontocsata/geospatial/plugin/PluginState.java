@@ -7,5 +7,7 @@ public enum PluginState {
 
 	LOADED,
 	STARTED,
-	STOPPED;
+	STOPPED,
+	ERROR_LOADING,
+	ERROR_STARTING;
 }
