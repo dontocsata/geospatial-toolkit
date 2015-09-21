@@ -3,6 +3,7 @@ package com.dontocsata.geospatial.plugin;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import org.reflections.Reflections;
+import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.GenericApplicationContext;
@@ -32,7 +33,7 @@ public class PluginManager {
 	private Map<Class<?>, PluginWrapper> plugins = new LinkedHashMap<>();
 
 	public PluginManager(EventBus eventBus, GenericApplicationContext context) {
-		this.eventBus=eventBus;
+		this.eventBus = eventBus;
 		this.context = context;
 		this.eventBus.register(this);
 	}
@@ -42,7 +43,7 @@ public class PluginManager {
 	 */
 	public Collection<PluginWrapper> loadPlugins() throws IOException {
 		//System plugins
-		findPlugins(getClass().getClassLoader(), true).stream().forEach(pw -> plugins.put(pw.getPluginClass(), pw));
+		findPlugins(null, true).stream().forEach(pw -> plugins.put(pw.getPluginClass(), pw));
 		//Other plugins
 		if (pluginDirectory.exists() && pluginDirectory.isDirectory()) {
 			for (File file : pluginDirectory.listFiles()) {
@@ -53,8 +54,8 @@ public class PluginManager {
 		return plugins.values().stream().filter(pw -> pw.getState() == PluginState.ERROR_LOADING).collect(Collectors.toList());
 	}
 
-	public Collection<PluginWrapper> getPlugins(PluginState state){
-		return plugins.values().stream().filter(pw->pw.getState()==state).collect(Collectors.toList());
+	public Collection<PluginWrapper> getPlugins(PluginState state) {
+		return plugins.values().stream().filter(pw -> pw.getState() == state).collect(Collectors.toList());
 	}
 
 	/**
@@ -89,15 +90,17 @@ public class PluginManager {
 		}
 	}
 
-	private Collection<PluginWrapper> findPlugins(ClassLoader classLoader, boolean systemPlugins) {
+	private Collection<PluginWrapper> findPlugins(URLClassLoader classLoader, boolean systemPlugins) {
+
 		Collection<PluginWrapper> result = new ArrayList<>();
-		Reflections reflections = systemPlugins ? new Reflections("com.dontocsata.geospatial") : new Reflections(classLoader);
+		Reflections reflections = systemPlugins ? new Reflections(new ConfigurationBuilder().forPackages("com.dontocsata.geospatial.handlers")) : new Reflections(new ConfigurationBuilder()
+				.addClassLoader(classLoader).setUrls(classLoader.getURLs()));
 		Set<Class<?>> klasses = reflections.getTypesAnnotatedWith(Plugin.class);
 		if (!systemPlugins && klasses.size() > 1) {
 			log.warn("Non-system plugin declares multiple @Plugin annotation. Offending class={}", klasses);
 			return klasses.stream().map(klass -> {
 				Plugin plugin = klass.getAnnotation(Plugin.class);
-				PluginWrapper pw= new PluginWrapper(this, plugin, klass, PluginState.ERROR_LOADING);
+				PluginWrapper pw = new PluginWrapper(this, plugin, klass, PluginState.ERROR_LOADING);
 				eventBus.post(new PluginStateChangeEvent(pw, PluginState.NEW, pw.getState()));
 				return pw;
 			}).collect(Collectors.toList());
@@ -115,7 +118,6 @@ public class PluginManager {
 				if (systemPlugins && runners.isEmpty()) {
 					throw new IllegalStateException("System plugins must declare their PluginRunners. Offending Plugin: " + klass.getName());
 				} else if (runners.isEmpty()) {
-					reflections = new Reflections(klass.getPackage().getName());
 					Set<Class<? extends PluginRunner>> runnerClasses = reflections.getSubTypesOf(PluginRunner.class);
 					for (Class<? extends PluginRunner> runnerClass : runnerClasses) {
 						if (!runnerClass.equals(Plugin.DEFAULT.class)) {
@@ -124,7 +126,12 @@ public class PluginManager {
 						}
 					}
 				}
-				PluginWrapper wrapper = new PluginWrapper(this, plugin, klass, runners);
+				PluginWrapper wrapper = null;
+				if (runners.isEmpty()) {
+					wrapper = new PluginWrapper(this, plugin, klass, PluginState.ERROR_LOADING);
+				} else {
+					wrapper = new PluginWrapper(this, plugin, klass, runners);
+				}
 				eventBus.post(new PluginStateChangeEvent(wrapper, PluginState.NEW));
 				log.info("Found plugin {}", wrapper);
 				result.add(wrapper);
@@ -139,13 +146,13 @@ public class PluginManager {
 		return result;
 	}
 
-	EventBus getEventBus(){
+	EventBus getEventBus() {
 		return eventBus;
 	}
 
 	@Subscribe
-	public void subscribe(PluginStateChangeEvent event){
-		log.debug("{}",event);
+	public void subscribe(PluginStateChangeEvent event) {
+		log.debug("{}", event);
 	}
 
 }

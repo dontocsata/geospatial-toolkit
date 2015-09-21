@@ -70,7 +70,6 @@ public class PluginWrapper {
 	@Override
 	public String toString() {
 		return "PluginWrapper{" +
-				"plugin=" + plugin +
 				", pluginClass=" + pluginClass +
 				", runners=" + runners +
 				", loader=" + loader +
