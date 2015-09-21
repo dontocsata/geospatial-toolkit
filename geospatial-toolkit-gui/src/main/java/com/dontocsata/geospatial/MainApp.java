@@ -216,14 +216,6 @@ public class MainApp extends Application implements MapComponentInitializedListe
 			log.error("Exception loading plugins", e);
 			//TODO show some dialog here?
 		}
-		for(PluginWrapper plugin:pluginManager.getAllPlugins()){
-			for(PluginRunner runner:plugin.getRunners()){
-				if(runner.getClass().isAnnotationPresent(MenuItemBinding.class)){
-					MenuItemBinding binding = runner.getClass().getAnnotation(MenuItemBinding.class);
-
-				}
-			}
-		}
 
 		progressText.setText("Initializing Main UI");
 		Stage stage = new Stage(StageStyle.DECORATED);
