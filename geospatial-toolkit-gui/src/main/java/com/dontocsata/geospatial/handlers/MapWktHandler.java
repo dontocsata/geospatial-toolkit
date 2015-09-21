@@ -7,7 +7,8 @@ import com.dontocsata.geospatial.MenuItemDescriptor;
 import com.dontocsata.geospatial.StreamUtils;
 import com.dontocsata.geospatial.config.FxmlTemplateResolver;
 import com.dontocsata.geospatial.layer.MapLayer;
-import com.dontocsata.geospatial.setup.MenuCommandHandler;
+import com.dontocsata.geospatial.plugin.MenuItemPluginRunner;
+import com.dontocsata.geospatial.plugin.Plugin;
 import javafx.fxml.FXML;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ColorPicker;
@@ -17,15 +18,14 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.paint.Color;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Component
-public class MapWktHandler implements MenuCommandHandler {
+@Plugin(name="Map WKT Handler", runners=MapWktHandler.class)
+public class MapWktHandler implements MenuItemPluginRunner {
 
 	private int count = 1;
 
@@ -88,6 +88,16 @@ public class MapWktHandler implements MenuCommandHandler {
 	@Override
 	public MenuItemDescriptor getMenuItemDescriptor() {
 		return new MenuItemDescriptor("Map", "Map WKT");
+	}
+
+	@Override
+	public void start() throws Exception {
+
+	}
+
+	@Override
+	public void stop() {
+
 	}
 
 	private static class MapWktResult {

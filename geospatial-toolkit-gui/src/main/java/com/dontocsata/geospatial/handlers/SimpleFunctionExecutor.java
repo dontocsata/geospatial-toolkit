@@ -1,18 +1,13 @@
 package com.dontocsata.geospatial.handlers;
 
-import java.io.IOException;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import com.dontocsata.geospatial.GeometryException;
 import com.dontocsata.geospatial.GeometryParser;
 import com.dontocsata.geospatial.MenuItemDescriptor;
 import com.dontocsata.geospatial.config.FxmlTemplateResolver;
-import com.dontocsata.geospatial.setup.MenuCommandHandler;
+import com.dontocsata.geospatial.plugin.MenuItemPluginRunner;
+import com.dontocsata.geospatial.plugin.Plugin;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
-
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ButtonType;
@@ -22,9 +17,12 @@ import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.KeyEvent;
+import org.springframework.beans.factory.annotation.Autowired;
 
-@Component
-public class SimpleFunctionExecutor implements MenuCommandHandler {
+import java.io.IOException;
+
+@Plugin(name = "Simple Function Executor", runners = SimpleFunctionExecutor.class)
+public class SimpleFunctionExecutor implements MenuItemPluginRunner {
 
 	@Autowired
 	private GeometryFactory gf;
@@ -131,4 +129,13 @@ public class SimpleFunctionExecutor implements MenuCommandHandler {
 		}
 	}
 
+	@Override
+	public void start() throws Exception {
+
+	}
+
+	@Override
+	public void stop() {
+
+	}
 }

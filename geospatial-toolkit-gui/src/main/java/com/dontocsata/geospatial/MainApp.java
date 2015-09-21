@@ -3,12 +3,10 @@ package com.dontocsata.geospatial;
 import com.dontocsata.geospatial.config.FxmlTemplateResolver;
 import com.dontocsata.geospatial.layer.MapLayer;
 import com.dontocsata.geospatial.layer.MapLayerEventType;
-import com.dontocsata.geospatial.plugin.MenuItemBinding;
+import com.dontocsata.geospatial.plugin.MenuItemPluginRunner;
 import com.dontocsata.geospatial.plugin.PluginManager;
-import com.dontocsata.geospatial.plugin.PluginRunner;
+import com.dontocsata.geospatial.plugin.PluginState;
 import com.dontocsata.geospatial.plugin.PluginWrapper;
-import com.dontocsata.geospatial.setup.CommandHandler;
-import com.dontocsata.geospatial.setup.MenuCommandHandler;
 import com.lynden.gmapsfx.GoogleMapView;
 import com.lynden.gmapsfx.MapComponentInitializedListener;
 import com.lynden.gmapsfx.javascript.event.MapStateEventType;
@@ -47,6 +45,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.core.io.DefaultResourceLoader;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
@@ -204,18 +203,22 @@ public class MainApp extends Application implements MapComponentInitializedListe
 		map.addUIEventHandler(UIEventType.click, eventHandler);
 
 		progressText.setText("Detecting Handlers");
-		Collection<CommandHandler> commandHandlers = context.getBeansOfType(CommandHandler.class).values();
-		MenuBar menuBar = setupMenu(commandHandlers);
-		parent.getChildren().add(menuBar);
-
 		progressText.setText("Loading Plugins");
 		pluginManager = new PluginManager(context);
 		try {
 			pluginManager.loadPlugins();
+			pluginManager.startPlugins();
 		} catch (IOException e) {
 			log.error("Exception loading plugins", e);
 			//TODO show some dialog here?
 		}
+		Collection<MenuItemPluginRunner> mipr = new ArrayList<>();
+		for (PluginWrapper pw : pluginManager.getPlugins(PluginState.STARTED)) {
+			pw.getRunners().stream().filter(r -> r instanceof MenuItemPluginRunner).map(r -> (MenuItemPluginRunner) r).forEach(mipr::add);
+		}
+
+		MenuBar menuBar = setupMenu(mipr);
+		parent.getChildren().add(menuBar);
 
 		progressText.setText("Initializing Main UI");
 		Stage stage = new Stage(StageStyle.DECORATED);
@@ -231,7 +234,7 @@ public class MainApp extends Application implements MapComponentInitializedListe
 
 	}
 
-	private MenuBar setupMenu(Collection<CommandHandler> handlers) {
+	private MenuBar setupMenu(Collection<MenuItemPluginRunner> handlers) {
 		MenuBar menuBar = new MenuBar();
 		Map<String, Menu> menus = new LinkedHashMap<>();
 		for (String name : new String[]{"File", "Edit", "View"}) {
@@ -253,25 +256,23 @@ public class MainApp extends Application implements MapComponentInitializedListe
 		});
 		menus.get("View").getItems().add(showHide);
 
-		for (CommandHandler ch : handlers) {
-			if (ch instanceof MenuCommandHandler) {
-				MenuItemDescriptor mi = ((MenuCommandHandler) ch).getMenuItemDescriptor();
-				Menu menu = menus.get(mi.getMenuName());
-				if (menu == null) {
-					menu = new Menu(mi.getMenuName());
-					menus.put(mi.getMenuName(), menu);
-					menuBar.getMenus().add(menu);
-				}
-				MenuItem item = new MenuItem(mi.getItemName());
-				menu.getItems().add(item);
-				item.setOnAction(ae -> {
-					try {
-						ch.invoke();
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				});
+		for (MenuItemPluginRunner ch : handlers) {
+			MenuItemDescriptor mi = ch.getMenuItemDescriptor();
+			Menu menu = menus.get(mi.getMenuName());
+			if (menu == null) {
+				menu = new Menu(mi.getMenuName());
+				menus.put(mi.getMenuName(), menu);
+				menuBar.getMenus().add(menu);
 			}
+			MenuItem item = new MenuItem(mi.getItemName());
+			menu.getItems().add(item);
+			item.setOnAction(ae -> {
+				try {
+					ch.invoke();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			});
 		}
 		menuBar.setUseSystemMenuBar(true);
 		return menuBar;

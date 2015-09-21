@@ -1,14 +1,13 @@
 package com.dontocsata.geospatial.handlers;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import com.dontocsata.geospatial.MenuItemDescriptor;
-import com.dontocsata.geospatial.setup.MenuCommandHandler;
+import com.dontocsata.geospatial.plugin.MenuItemPluginRunner;
+import com.dontocsata.geospatial.plugin.Plugin;
 import com.vividsolutions.jts.geom.Geometry;
+import org.springframework.beans.factory.annotation.Autowired;
 
-@Component
-public class CreateGeometryHandler implements MenuCommandHandler {
+@Plugin(name="Create Geometry Handler", runners=CreateGeometryHandler.class)
+public class CreateGeometryHandler implements MenuItemPluginRunner {
 
 	@Autowired
 	private PlaceMarkersHandler placeMarkersHandler;
@@ -24,4 +23,13 @@ public class CreateGeometryHandler implements MenuCommandHandler {
 		return new MenuItemDescriptor("Generate", "Generate Geometry");
 	}
 
+	@Override
+	public void start() throws Exception {
+
+	}
+
+	@Override
+	public void stop() {
+
+	}
 }

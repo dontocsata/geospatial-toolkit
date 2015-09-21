@@ -1,19 +1,17 @@
 package com.dontocsata.geospatial.handlers;
 
-import java.util.Optional;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import com.dontocsata.geospatial.MenuItemDescriptor;
-import com.dontocsata.geospatial.setup.MenuCommandHandler;
+import com.dontocsata.geospatial.plugin.MenuItemPluginRunner;
+import com.dontocsata.geospatial.plugin.Plugin;
 import com.lynden.gmapsfx.javascript.object.GoogleMap;
 import com.lynden.gmapsfx.javascript.object.LatLong;
-
 import javafx.scene.control.TextInputDialog;
+import org.springframework.beans.factory.annotation.Autowired;
 
-@Component
-public class ZoomController implements MenuCommandHandler {
+import java.util.Optional;
+
+@Plugin(name="Zoom Controller", runners=ZoomController.class)
+public class ZoomController implements MenuItemPluginRunner {
 
 	@Autowired
 	private GoogleMap map;
@@ -34,4 +32,13 @@ public class ZoomController implements MenuCommandHandler {
 		return new MenuItemDescriptor("File", "Zoom");
 	}
 
+	@Override
+	public void start() throws Exception {
+
+	}
+
+	@Override
+	public void stop() {
+
+	}
 }

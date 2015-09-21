@@ -1,15 +1,9 @@
 package com.dontocsata.geospatial.handlers;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import com.dontocsata.geospatial.MenuItemDescriptor;
 import com.dontocsata.geospatial.MutableUIEventHandler;
-import com.dontocsata.geospatial.setup.MenuCommandHandler;
+import com.dontocsata.geospatial.plugin.MenuItemPluginRunner;
+import com.dontocsata.geospatial.plugin.Plugin;
 import com.lynden.gmapsfx.javascript.event.UIEventHandler;
 import com.lynden.gmapsfx.javascript.event.UIEventType;
 import com.lynden.gmapsfx.javascript.object.Animation;
@@ -22,11 +16,15 @@ import com.lynden.gmapsfx.javascript.object.MarkerOptions;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
-
 import netscape.javascript.JSObject;
+import org.springframework.beans.factory.annotation.Autowired;
 
-@Component
-public class PlaceMarkersHandler implements MenuCommandHandler {
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Plugin(name="Place Markers Handler", runners=PlaceMarkersHandler.class)
+public class PlaceMarkersHandler implements MenuItemPluginRunner {
 
 	@Autowired
 	private MutableUIEventHandler eventHandler;
@@ -89,4 +87,13 @@ public class PlaceMarkersHandler implements MenuCommandHandler {
 		return null;
 	}
 
+	@Override
+	public void start() throws Exception {
+
+	}
+
+	@Override
+	public void stop() {
+
+	}
 }

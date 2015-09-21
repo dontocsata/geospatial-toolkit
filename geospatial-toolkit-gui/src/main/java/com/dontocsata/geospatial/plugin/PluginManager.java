@@ -48,6 +48,10 @@ public class PluginManager {
 		return plugins.values().stream().filter(pw -> pw.getState() == PluginState.ERROR_LOADING).collect(Collectors.toList());
 	}
 
+	public Collection<PluginWrapper> getPlugins(PluginState state){
+		return plugins.values().stream().filter(pw->pw.getState()==state).collect(Collectors.toList());
+	}
+
 	/**
 	 * Start all of the loaded plugins. Returns the plugins that failed to started
 	 */
