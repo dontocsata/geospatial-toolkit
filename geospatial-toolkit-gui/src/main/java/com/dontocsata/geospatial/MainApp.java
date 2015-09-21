@@ -7,6 +7,7 @@ import com.dontocsata.geospatial.plugin.MenuItemPluginRunner;
 import com.dontocsata.geospatial.plugin.PluginManager;
 import com.dontocsata.geospatial.plugin.PluginState;
 import com.dontocsata.geospatial.plugin.PluginWrapper;
+import com.google.common.eventbus.EventBus;
 import com.lynden.gmapsfx.GoogleMapView;
 import com.lynden.gmapsfx.MapComponentInitializedListener;
 import com.lynden.gmapsfx.javascript.event.MapStateEventType;
@@ -202,9 +203,11 @@ public class MainApp extends Application implements MapComponentInitializedListe
 		eventHandler = context.getBean(MutableUIEventHandler.class);
 		map.addUIEventHandler(UIEventType.click, eventHandler);
 
+		EventBus eventBus = context.getBean(EventBus.class);
+
 		progressText.setText("Detecting Handlers");
 		progressText.setText("Loading Plugins");
-		pluginManager = new PluginManager(context);
+		pluginManager = new PluginManager(eventBus, context);
 		try {
 			pluginManager.loadPlugins();
 			pluginManager.startPlugins();

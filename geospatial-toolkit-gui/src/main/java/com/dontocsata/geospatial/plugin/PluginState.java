@@ -5,6 +5,7 @@ package com.dontocsata.geospatial.plugin;
  */
 public enum PluginState {
 
+	NEW,
 	LOADED,
 	STARTED,
 	STOPPED,

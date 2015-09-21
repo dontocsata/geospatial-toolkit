@@ -7,6 +7,8 @@ import java.util.Collection;
  */
 public class PluginWrapper {
 
+	private PluginManager manager;
+
 	private Plugin plugin;
 	private Class<?> pluginClass;
 	private Collection<PluginRunner> runners;
@@ -14,7 +16,8 @@ public class PluginWrapper {
 
 	private PluginState state = PluginState.LOADED;
 
-	public PluginWrapper(Plugin plugin, Class<?> pluginClass, Collection<PluginRunner> runners) {
+	public PluginWrapper(PluginManager manager, Plugin plugin, Class<?> pluginClass, Collection<PluginRunner> runners) {
+		this.manager = manager;
 		this.plugin = plugin;
 		this.pluginClass = pluginClass;
 		this.runners = runners;
@@ -23,7 +26,8 @@ public class PluginWrapper {
 	/**
 	 * Construct the wrapper with the specified PluginState. This is typically used to mark errors.
 	 */
-	public PluginWrapper(Plugin plugin, Class<?> pluginClass, PluginState state) {
+	public PluginWrapper(PluginManager manager, Plugin plugin, Class<?> pluginClass, PluginState state) {
+		this.manager = manager;
 		this.plugin = plugin;
 		this.pluginClass = pluginClass;
 		this.state = state;
@@ -33,12 +37,12 @@ public class PluginWrapper {
 		for (PluginRunner runner : runners) {
 			runner.start();
 		}
-		state = PluginState.STARTED;
+		setState(PluginState.STARTED);
 	}
 
 	public void stop() throws Exception {
 		runners.forEach(PluginRunner::stop);
-		state = PluginState.STOPPED;
+		setState(PluginState.STOPPED);
 	}
 
 	public Plugin getPlugin() {
@@ -58,9 +62,10 @@ public class PluginWrapper {
 	}
 
 	void setState(PluginState state) {
+		PluginState current = getState();
 		this.state = state;
+		manager.getEventBus().post(new PluginStateChangeEvent(this, current, state));
 	}
-
 
 	@Override
 	public String toString() {

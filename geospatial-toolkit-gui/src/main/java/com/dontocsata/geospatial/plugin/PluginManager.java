@@ -1,5 +1,7 @@
 package com.dontocsata.geospatial.plugin;
 
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,13 +25,16 @@ public class PluginManager {
 
 	private static final Logger log = LoggerFactory.getLogger(PluginManager.class);
 
+	private EventBus eventBus;
 	private GenericApplicationContext context;
 	private File pluginDirectory = new File("plugins");
 
 	private Map<Class<?>, PluginWrapper> plugins = new LinkedHashMap<>();
 
-	public PluginManager(GenericApplicationContext context) {
+	public PluginManager(EventBus eventBus, GenericApplicationContext context) {
+		this.eventBus=eventBus;
 		this.context = context;
+		this.eventBus.register(this);
 	}
 
 	/**
@@ -61,7 +66,6 @@ public class PluginManager {
 			if (pw.getState() == PluginState.LOADED) {
 				try {
 					pw.start();
-					pw.setState(PluginState.STARTED);
 				} catch (Exception ex) {
 					log.warn("Failed to start plugin=" + pw.getPluginClass(), ex);
 					pw.setState(PluginState.ERROR_STARTING);
@@ -93,7 +97,9 @@ public class PluginManager {
 			log.warn("Non-system plugin declares multiple @Plugin annotation. Offending class={}", klasses);
 			return klasses.stream().map(klass -> {
 				Plugin plugin = klass.getAnnotation(Plugin.class);
-				return new PluginWrapper(plugin, klass, PluginState.ERROR_LOADING);
+				PluginWrapper pw= new PluginWrapper(this, plugin, klass, PluginState.ERROR_LOADING);
+				eventBus.post(new PluginStateChangeEvent(pw, PluginState.NEW, pw.getState()));
+				return pw;
 			}).collect(Collectors.toList());
 		}
 		for (Class<?> klass : klasses) {
@@ -118,16 +124,28 @@ public class PluginManager {
 						}
 					}
 				}
-				PluginWrapper wrapper = new PluginWrapper(plugin, klass, runners);
+				PluginWrapper wrapper = new PluginWrapper(this, plugin, klass, runners);
+				eventBus.post(new PluginStateChangeEvent(wrapper, PluginState.NEW));
 				log.info("Found plugin {}", wrapper);
 				result.add(wrapper);
 			} catch (Exception ex) {
 				log.error("Error loading Plugin=" + klass, ex);
-				result.add(new PluginWrapper(plugin, klass, PluginState.ERROR_LOADING));
+				PluginWrapper pw = new PluginWrapper(this, plugin, klass, PluginState.ERROR_LOADING);
+				eventBus.post(new PluginStateChangeEvent(pw, PluginState.NEW));
+				result.add(pw);
 			}
 		}
 
 		return result;
+	}
+
+	EventBus getEventBus(){
+		return eventBus;
+	}
+
+	@Subscribe
+	public void subscribe(PluginStateChangeEvent event){
+		log.debug("{}",event);
 	}
 
 }
