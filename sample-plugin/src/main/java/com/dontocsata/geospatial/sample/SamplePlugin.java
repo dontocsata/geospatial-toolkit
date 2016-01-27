@@ -1,5 +1,7 @@
 package com.dontocsata.geospatial.sample;
 
+import java.util.Map;
+
 import com.dontocsata.geospatial.MenuItemDescriptor;
 import com.dontocsata.geospatial.plugin.MenuItemPluginRunner;
 import com.dontocsata.geospatial.plugin.Plugin;
@@ -8,8 +10,8 @@ import com.dontocsata.geospatial.plugin.PluginRunner;
 /**
  * Created by ray.douglass on 9/21/15.
  */
-@Plugin(name="Sample Plugin")
-public class SamplePlugin implements PluginRunner, MenuItemPluginRunner{
+@Plugin(name = "Sample Plugin")
+public class SamplePlugin implements PluginRunner, MenuItemPluginRunner {
 
 	@Override
 	public MenuItemDescriptor getMenuItemDescriptor() {
@@ -22,8 +24,8 @@ public class SamplePlugin implements PluginRunner, MenuItemPluginRunner{
 	}
 
 	@Override
-	public void start() throws Exception {
-
+	public Map<String, Object> start() throws Exception {
+		return null;
 	}
 
 	@Override

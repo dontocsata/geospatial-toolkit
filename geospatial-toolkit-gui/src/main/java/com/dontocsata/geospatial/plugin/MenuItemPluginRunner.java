@@ -2,12 +2,17 @@ package com.dontocsata.geospatial.plugin;
 
 import com.dontocsata.geospatial.MenuItemDescriptor;
 
+import javafx.scene.control.MenuItem;
+
 /**
- * Created by ray.douglass on 9/21/15.
+ * A {@link PluginRunner} that is invoked by a {@link MenuItem}.
  */
 public interface MenuItemPluginRunner extends PluginRunner {
 
 	public MenuItemDescriptor getMenuItemDescriptor();
+
+	public default void init(MenuItem menuItem) {
+	}
 
 	public void invoke() throws Exception;
 

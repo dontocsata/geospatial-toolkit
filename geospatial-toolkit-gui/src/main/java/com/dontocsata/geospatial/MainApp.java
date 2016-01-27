@@ -1,5 +1,15 @@
 package com.dontocsata.geospatial;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumSet;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.core.io.DefaultResourceLoader;
+
 import com.dontocsata.geospatial.config.FxmlTemplateResolver;
 import com.dontocsata.geospatial.layer.MapLayer;
 import com.dontocsata.geospatial.layer.MapLayerEventType;
@@ -19,6 +29,7 @@ import com.lynden.gmapsfx.javascript.object.LatLong;
 import com.lynden.gmapsfx.javascript.object.MapOptions;
 import com.lynden.gmapsfx.javascript.object.MapTypeIdEnum;
 import com.vividsolutions.jts.geom.Point;
+
 import javafx.application.Application;
 import javafx.fxml.FXML;
 import javafx.geometry.Point2D;
@@ -28,7 +39,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
-import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressBar;
@@ -40,17 +50,6 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import netscape.javascript.JSObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.core.io.DefaultResourceLoader;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 public class MainApp extends Application implements MapComponentInitializedListener {
 
@@ -79,6 +78,7 @@ public class MainApp extends Application implements MapComponentInitializedListe
 	private MapLayer droppedMarkersLayer;
 
 	private PluginManager pluginManager;
+	private MenuBarManager menuBarManager = new MenuBarManager();
 
 	private static final int SPLASH_WIDTH = 450;
 	private static final int SPLASH_HEIGHT = 225;
@@ -93,15 +93,17 @@ public class MainApp extends Application implements MapComponentInitializedListe
 
 	@Override
 	public void init() throws Exception {
-		//ImageView splash = new ImageView(new Image("http://fxexperience.com/wp-content/uploads/2010/06/logo.png"));
+		// ImageView splash = new ImageView(new
+		// Image("http://fxexperience.com/wp-content/uploads/2010/06/logo.png"));
 		loadProgress = new ProgressBar();
 		loadProgress.setPrefWidth(SPLASH_WIDTH - 20);
 		progressText = new Label();
 		splashLayout = new VBox();
-		//splashLayout.getChildren().add(splash);
+		// splashLayout.getChildren().add(splash);
 		splashLayout.getChildren().addAll(loadProgress, progressText);
 		progressText.setAlignment(Pos.CENTER);
-		splashLayout.setStyle("-fx-padding: 5; -fx-background-color: cornsilk; -fx-border-width:5; -fx-border-color: linear-gradient(to bottom, chocolate, derive(chocolate, 50%));");
+		splashLayout.setStyle(
+				"-fx-padding: 5; -fx-background-color: cornsilk; -fx-border-width:5; -fx-border-color: linear-gradient(to bottom, chocolate, derive(chocolate, 50%));");
 		splashLayout.setEffect(new DropShadow());
 	}
 
@@ -114,11 +116,11 @@ public class MainApp extends Application implements MapComponentInitializedListe
 		parent = new FxmlTemplateResolver(new DefaultResourceLoader()).loadTemplate("MainApp.fxml", this);
 		mapComponent.addMapInializedListener(this);
 
-		//stage.setMaximized(true);
+		// stage.setMaximized(true);
 	}
 
 	private void showSplash(Stage initStage) {
-		this.initalStage = initStage;
+		initalStage = initStage;
 		Scene splashScene = new Scene(splashLayout);
 		initStage.initStyle(StageStyle.UNDECORATED);
 		final Rectangle2D bounds = Screen.getPrimary().getBounds();
@@ -130,6 +132,13 @@ public class MainApp extends Application implements MapComponentInitializedListe
 
 	@Override
 	public void mapInitialized() {
+		progressText.setText("Initializing Main UI");
+		Stage stage = new Stage(StageStyle.DECORATED);
+		stage.setTitle("Geospatial Toolkit");
+		Scene scene = new Scene(parent);
+		scene.getStylesheets().add("/css/style.css");
+		stage.setScene(scene);
+
 		log.debug("Map initialized");
 		progressText.setText("Configuring Map Components");
 		// Configure map
@@ -143,6 +152,9 @@ public class MainApp extends Application implements MapComponentInitializedListe
 			latLongLabel.setText("(" + latLong.getLatitude() + ", " + latLong.getLongitude() + ")");
 		});
 		map.addUIEventHandler(UIEventType.rightclick, jObj -> {
+			if (contextMenu != null) {
+				contextMenu.hide();
+			}
 			LatLong latLong = new LatLong((JSObject) jObj.getMember("latLng"));
 			Point2D point = map.fromLatLngToPoint(latLong);
 			contextMenu = new ContextMenu();
@@ -160,24 +172,26 @@ public class MainApp extends Application implements MapComponentInitializedListe
 				}
 				droppedMarkersLayer = builder.setName("Dropped Markers").addGeometry(new GeometryWrapper(p))
 						.addListener(MapLayerEventType.CLICK, event -> {
-							InfoWindowOptions iwo = new InfoWindowOptions();
-							iwo.position(latLong);
-							iwo.content("(" + latLong.getLatitude() + ", " + latLong.getLongitude() + ")");
-							new InfoWindow(iwo).open(map, event.getMarker());
-						}).addListener(MapLayerEventType.RIGHT_CLICK, event -> {
-							ContextMenu menu = new ContextMenu();
-							MenuItem remove = new MenuItem("Remove Marker");
-							remove.setOnAction(actionEvent -> {
-								System.out.println("Remove!");
-							});
-							menu.getItems().add(item);
-							menu.show(mapComponent, point.getX(), point.getY());
-						}).build();
+					InfoWindowOptions iwo = new InfoWindowOptions();
+					iwo.position(latLong);
+					iwo.content("(" + latLong.getLatitude() + ", " + latLong.getLongitude() + ")");
+					new InfoWindow(iwo).open(map, event.getMarker());
+				}).addListener(MapLayerEventType.RIGHT_CLICK, event -> {
+					ContextMenu menu = new ContextMenu();
+					MenuItem remove = new MenuItem("Remove Marker");
+					remove.setOnAction(actionEvent -> {
+						System.out.println("Remove!");
+					});
+					menu.getItems().add(item);
+					menu.show(mapComponent, point.getX(), point.getY());
+				}).build();
 				if (addToControl) {
 					mapLayerControl.add(droppedMarkersLayer);
 				}
 			});
-			contextMenu.show(mapComponent, point.getX(), point.getY());
+			double x = stage.getX() + point.getX();
+			double y = stage.getY() + point.getY();
+			contextMenu.show(mapComponent, x, y);
 		});
 		map.addStateEventHandler(MapStateEventType.dragstart, () -> contextMenu.hide());
 		EnumSet<UIEventType> of = EnumSet.of(UIEventType.click, UIEventType.dblclick);
@@ -207,28 +221,25 @@ public class MainApp extends Application implements MapComponentInitializedListe
 
 		progressText.setText("Detecting Handlers");
 		progressText.setText("Loading Plugins");
+		eventBus.register(menuBarManager);
 		pluginManager = new PluginManager(eventBus, context);
 		try {
 			pluginManager.loadPlugins();
 			pluginManager.startPlugins();
+			context.getBean(PluginManagerController.class).configure(pluginManager);
 		} catch (IOException e) {
 			log.error("Exception loading plugins", e);
-			//TODO show some dialog here?
+			// TODO show some dialog here?
 		}
 		Collection<MenuItemPluginRunner> mipr = new ArrayList<>();
 		for (PluginWrapper pw : pluginManager.getPlugins(PluginState.STARTED)) {
-			pw.getRunners().stream().filter(r -> r instanceof MenuItemPluginRunner).map(r -> (MenuItemPluginRunner) r).forEach(mipr::add);
+			pw.getRunners().stream().filter(r -> r instanceof MenuItemPluginRunner).map(r -> (MenuItemPluginRunner) r)
+					.forEach(mipr::add);
 		}
 
 		MenuBar menuBar = setupMenu(mipr);
 		parent.getChildren().add(menuBar);
 
-		progressText.setText("Initializing Main UI");
-		Stage stage = new Stage(StageStyle.DECORATED);
-		stage.setTitle("Geospatial Toolkit");
-		Scene scene = new Scene(parent);
-		scene.getStylesheets().add("/css/style.css");
-		stage.setScene(scene);
 		stage.show();
 		initalStage.hide();
 	}
@@ -238,13 +249,6 @@ public class MainApp extends Application implements MapComponentInitializedListe
 	}
 
 	private MenuBar setupMenu(Collection<MenuItemPluginRunner> handlers) {
-		MenuBar menuBar = new MenuBar();
-		Map<String, Menu> menus = new LinkedHashMap<>();
-		for (String name : new String[]{"File", "Edit", "View"}) {
-			menus.put(name, new Menu(name));
-			menuBar.getMenus().add(menus.get(name));
-		}
-
 		MenuItem showHide = new MenuItem("Hide Layer List");
 		showHide.setOnAction(ae -> {
 			synchronized (this) {
@@ -257,28 +261,21 @@ public class MainApp extends Application implements MapComponentInitializedListe
 				}
 			}
 		});
-		menus.get("View").getItems().add(showHide);
+		menuBarManager.add("View", showHide);
 
-		for (MenuItemPluginRunner ch : handlers) {
-			MenuItemDescriptor mi = ch.getMenuItemDescriptor();
-			Menu menu = menus.get(mi.getMenuName());
-			if (menu == null) {
-				menu = new Menu(mi.getMenuName());
-				menus.put(mi.getMenuName(), menu);
-				menuBar.getMenus().add(menu);
-			}
-			MenuItem item = new MenuItem(mi.getItemName());
-			menu.getItems().add(item);
-			item.setOnAction(ae -> {
-				try {
-					ch.invoke();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			});
-		}
-		menuBar.setUseSystemMenuBar(true);
-		return menuBar;
+		// for (MenuItemPluginRunner ch : handlers) {
+		// MenuItem item = menuBarManager.add(ch.getMenuItemDescriptor(), ae ->
+		// {
+		// try {
+		// ch.invoke();
+		// } catch (Exception e) {
+		// // TODO show error dialog
+		// e.printStackTrace();
+		// }
+		// });
+		// ch.init(item);
+		// }
+		return menuBarManager.getMenuBar();
 	}
 
 }

@@ -1,7 +1,15 @@
 package com.dontocsata.geospatial.handlers;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
 import com.dontocsata.geospatial.MenuItemDescriptor;
 import com.dontocsata.geospatial.MutableUIEventHandler;
+import com.dontocsata.geospatial.StreamUtils;
 import com.dontocsata.geospatial.plugin.MenuItemPluginRunner;
 import com.dontocsata.geospatial.plugin.Plugin;
 import com.lynden.gmapsfx.javascript.event.UIEventHandler;
@@ -16,14 +24,12 @@ import com.lynden.gmapsfx.javascript.object.MarkerOptions;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
+
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import netscape.javascript.JSObject;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
-@Plugin(name="Place Markers Handler", runners=PlaceMarkersHandler.class)
+@Plugin(name = "Place Markers Handler", runners = PlaceMarkersHandler.class)
 public class PlaceMarkersHandler implements MenuItemPluginRunner {
 
 	@Autowired
@@ -37,6 +43,7 @@ public class PlaceMarkersHandler implements MenuItemPluginRunner {
 
 	private List<LatLong> points = new ArrayList<>();
 	private List<Marker> markers = new ArrayList<>();
+	private BooleanProperty statusProperty = new SimpleBooleanProperty(true);
 
 	private UIEventHandler handler = new UIEventHandler() {
 
@@ -59,7 +66,7 @@ public class PlaceMarkersHandler implements MenuItemPluginRunner {
 				new InfoWindow(iwo).open(map, marker);
 			});
 			markers.add(marker);
-
+			statusProperty.set(false);
 		}
 	};
 
@@ -76,6 +83,7 @@ public class PlaceMarkersHandler implements MenuItemPluginRunner {
 
 	public Geometry generate() {
 		eventHandler.remove(handler);
+		statusProperty.set(true);
 		markers.forEach(map::removeMarker);
 		List<Coordinate> coords = points.stream().map(ll -> new Coordinate(ll.getLongitude(), ll.getLatitude()))
 				.collect(Collectors.toList());
@@ -88,12 +96,16 @@ public class PlaceMarkersHandler implements MenuItemPluginRunner {
 	}
 
 	@Override
-	public void start() throws Exception {
-
+	public Map<String, Object> start() throws Exception {
+		return StreamUtils.createMap("placeMarkersHandler", this);
 	}
 
 	@Override
 	public void stop() {
 
+	}
+
+	BooleanProperty statusProperty() {
+		return statusProperty;
 	}
 }

@@ -1,5 +1,13 @@
 package com.dontocsata.geospatial.handlers;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
 import com.dontocsata.geospatial.GeometryParser;
 import com.dontocsata.geospatial.GeometryWrapper;
 import com.dontocsata.geospatial.MapLayerControl;
@@ -9,6 +17,7 @@ import com.dontocsata.geospatial.config.FxmlTemplateResolver;
 import com.dontocsata.geospatial.layer.MapLayer;
 import com.dontocsata.geospatial.plugin.MenuItemPluginRunner;
 import com.dontocsata.geospatial.plugin.Plugin;
+
 import javafx.fxml.FXML;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ColorPicker;
@@ -17,14 +26,8 @@ import javafx.scene.control.DialogPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.paint.Color;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-@Plugin(name="Map WKT Handler", runners=MapWktHandler.class)
+@Plugin(name = "Map WKT Handler", runners = MapWktHandler.class)
 public class MapWktHandler implements MenuItemPluginRunner {
 
 	private int count = 1;
@@ -73,8 +76,7 @@ public class MapWktHandler implements MenuItemPluginRunner {
 			MapWktResult mwr = result.get();
 			if (mwr.wkts != null) {
 				List<GeometryWrapper> geometries = Stream.of(mwr.wkts)
-						.map(StreamUtils.rethrow(w -> geometryParser.parse(w, mwr.srid)))
-						.map(GeometryWrapper::new)
+						.map(StreamUtils.rethrow(w -> geometryParser.parse(w, mwr.srid))).map(GeometryWrapper::new)
 						.collect(Collectors.toList());
 				MapLayer layer = new MapLayer.Builder().setName(mwr.name).setGeometries(geometries).setColor(mwr.color)
 						.build();
@@ -91,8 +93,8 @@ public class MapWktHandler implements MenuItemPluginRunner {
 	}
 
 	@Override
-	public void start() throws Exception {
-
+	public Map<String, Object> start() throws Exception {
+		return null;
 	}
 
 	@Override
